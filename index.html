@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="night">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MFG OPS — Operations Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════════════════
+   TOKENS — NIGHT (default)
+══════════════════════════════════════════════════════════ */
+:root {
+  --bg:          #070910;
+  --bg2:         #0d0f14;
+  --surface:     #111318;
+  --surface2:    #161920;
+  --surface3:    #1d2130;
+  --border:      #252a3a;
+  --border2:     #313a52;
+  --accent:      #f0c040;
+  --accent-glow: rgba(240,192,64,0.18);
+  --accent-dim:  rgba(240,192,64,0.07);
+  --red:         #ef4444;
+  --blue:        #3b82f6;
+  --green:       #22c55e;
+  --orange:      #f97316;
+  --purple:      #a855f7;
+  --text:        #e8eaf0;
+  --text2:       #c8cad6;
+  --muted:       #5a6075;
+  --label:       #8890a8;
+
+  /* Role colors */
+  --worker-c:    #22c55e;
+  --worker-glow: rgba(34,197,94,0.15);
+  --maint-c:     #f97316;
+  --maint-glow:  rgba(249,115,22,0.15);
+  --admin-c:     #f0c040;
+  --admin-glow:  rgba(240,192,64,0.15);
+
+  --radius: 10px;
+  --transition: 0.22s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ── DAY THEME ─────────────────────────────────────────── */
+[data-theme="day"] {
+  --bg:          #eef0f5;
+  --bg2:         #f5f7fa;
+  --surface:     #ffffff;
+  --surface2:    #f0f3f9;
+  --surface3:    #e8ecf5;
+  --border:      #d0d5e8;
+  --border2:     #b8c0d8;
+  --accent:      #c8920a;
+  --accent-glow: rgba(200,146,10,0.12);
+  --accent-dim:  rgba(200,146,10,0.06);
+  --red:         #dc2626;
+  --blue:        #2563eb;
+  --green:       #16a34a;
+  --orange:      #ea580c;
+  --purple:      #7c3aed;
+  --text:        #0f1117;
+  --text2:       #2d3148;
+  --muted:       #7b82a0;
+  --label:       #4b5268;
+
+  --worker-glow: rgba(22,163,74,0.10);
+  --maint-glow:  rgba(234,88,12,0.10);
+  --admin-glow:  rgba(200,146,10,0.10);
+}
+
+[data-theme="day"] .grid-bg { opacity: 0.18; }
+[data-theme="day"] .scanline-overlay { opacity: 0; }
+[data-theme="day"] .hero-glow { opacity: 0.5; }
+[data-theme="day"] .corner-tag { color: var(--muted); border-color: var(--border); }
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  overflow-x: hidden;
+}
+
+/* ══════════════════════════════════════════════════════════
+   ANIMATED GRID BACKGROUND
+══════════════════════════════════════════════════════════ */
+.grid-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.55;
+  background-image:
+    linear-gradient(rgba(240,192,64,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(240,192,64,0.06) 1px, transparent 1px);
+  background-size: 44px 44px;
+  animation: grid-drift 60s linear infinite;
+}
+@keyframes grid-drift {
+  0%   { background-position: 0 0, 0 0; }
+  100% { background-position: 0 440px, 440px 0; }
+}
+
+.scanline-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0,0,0,0.04) 3px,
+    rgba(0,0,0,0.04) 4px
+  );
+}
+
+.hero-glow {
+  position: fixed;
+  top: -30%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 900px;
+  height: 600px;
+  background: radial-gradient(ellipse at center, rgba(240,192,64,0.07) 0%, transparent 65%);
+  pointer-events: none;
+  z-index: 0;
+  animation: glow-pulse 8s ease-in-out infinite;
+}
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.6; transform: translateX(-50%) scale(1); }
+  50%       { opacity: 1;   transform: translateX(-50%) scale(1.08); }
+}
+
+/* ══════════════════════════════════════════════════════════
+   TOP BAR
+══════════════════════════════════════════════════════════ */
+.topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  background: rgba(7,9,16,0.82);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+  z-index: 200;
+  transition: background var(--transition);
+}
+[data-theme="day"] .topbar {
+  background: rgba(238,240,245,0.88);
+}
+
+.topbar-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 24px;
+  letter-spacing: 5px;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.topbar-logo .logo-ops {
+  color: var(--text);
+}
+.topbar-logo .logo-sep {
+  width: 1px;
+  height: 20px;
+  background: var(--border2);
+  margin: 0 2px;
+}
+.topbar-logo .logo-sub {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  font-weight: 400;
+  color: var(--muted);
+  letter-spacing: 3px;
+  line-height: 1;
+  padding-top: 2px;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.clock-display {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  color: var(--accent);
+  letter-spacing: 2px;
+  min-width: 80px;
+  text-align: right;
+}
+
+.date-display {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+
+/* ── Theme Toggle ── */
+.theme-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--accent-dim);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  color: var(--label);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.theme-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-glow);
+}
+.theme-btn .icon { font-size: 14px; line-height: 1; }
+
+/* ══════════════════════════════════════════════════════════
+   HERO
+══════════════════════════════════════════════════════════ */
+.hero {
+  position: relative;
+  z-index: 10;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 24px 60px;
+}
+
+.hero-eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 5px;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 18px;
+  opacity: 0;
+  animation: fade-up 0.7s ease forwards 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.hero-eyebrow::before,
+.hero-eyebrow::after {
+  content: '';
+  width: 40px;
+  height: 1px;
+  background: var(--accent);
+  opacity: 0.4;
+}
+
+.hero-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(72px, 12vw, 140px);
+  line-height: 0.9;
+  letter-spacing: 6px;
+  text-align: center;
+  margin-bottom: 14px;
+  opacity: 0;
+  animation: fade-up 0.7s ease forwards 0.35s;
+}
+.hero-title .line1 { color: var(--text); display: block; }
+.hero-title .line2 {
+  color: var(--accent);
+  display: block;
+  -webkit-text-stroke: 1px var(--accent);
+}
+
+.hero-sub {
+  font-size: 15px;
+  font-weight: 300;
+  color: var(--label);
+  letter-spacing: 0.5px;
+  text-align: center;
+  max-width: 480px;
+  line-height: 1.7;
+  margin-bottom: 60px;
+  opacity: 0;
+  animation: fade-up 0.7s ease forwards 0.5s;
+}
+
+/* ── Status bar ── */
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 10px 22px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 56px;
+  opacity: 0;
+  animation: fade-up 0.7s ease forwards 0.6s;
+}
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+.status-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  animation: blink 2s ease-in-out infinite;
+}
+.status-dot.green  { background: var(--green);  box-shadow: 0 0 6px var(--green); }
+.status-dot.amber  { background: var(--accent); box-shadow: 0 0 6px var(--accent); animation-delay: 0.5s; }
+.status-dot.blue   { background: var(--blue);   box-shadow: 0 0 6px var(--blue);  animation-delay: 1s; }
+@keyframes blink {
+  0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
+}
+.status-sep { width: 1px; height: 18px; background: var(--border); }
+.status-val { color: var(--text2); font-weight: 600; }
+
+/* ══════════════════════════════════════════════════════════
+   ROLE CARDS
+══════════════════════════════════════════════════════════ */
+.role-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  max-width: 980px;
+  width: 100%;
+  opacity: 0;
+  animation: fade-up 0.8s ease forwards 0.75s;
+}
+
+.role-card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 32px 28px 28px;
+  cursor: pointer;
+  transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Ambient glow behind card */
+.role-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.role-card.worker::before  { background: radial-gradient(ellipse at 50% 0%, var(--worker-glow) 0%, transparent 70%); }
+.role-card.maint::before   { background: radial-gradient(ellipse at 50% 0%, var(--maint-glow)  0%, transparent 70%); }
+.role-card.admin::before   { background: radial-gradient(ellipse at 50% 0%, var(--admin-glow)  0%, transparent 70%); }
+
+/* Top accent bar */
+.role-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: 14px 14px 0 0;
+  transform: scaleX(0);
+  transition: transform 0.28s ease;
+  transform-origin: left;
+}
+.role-card.worker::after { background: linear-gradient(90deg, var(--worker-c), rgba(34,197,94,0.3)); }
+.role-card.maint::after  { background: linear-gradient(90deg, var(--maint-c),  rgba(249,115,22,0.3)); }
+.role-card.admin::after  { background: linear-gradient(90deg, var(--admin-c),  rgba(240,192,64,0.3)); }
+
+.role-card:hover {
+  transform: translateY(-5px);
+}
+.role-card:hover::before  { opacity: 1; }
+.role-card:hover::after   { transform: scaleX(1); }
+.role-card.worker:hover   { border-color: var(--worker-c); box-shadow: 0 16px 48px rgba(34,197,94,0.12); }
+.role-card.maint:hover    { border-color: var(--maint-c);  box-shadow: 0 16px 48px rgba(249,115,22,0.12); }
+.role-card.admin:hover    { border-color: var(--admin-c);  box-shadow: 0 16px 48px rgba(240,192,64,0.15); }
+
+/* Role icon */
+.role-icon-wrap {
+  width: 56px; height: 56px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  font-size: 26px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+.worker .role-icon-wrap  { background: rgba(34,197,94,0.1);  border: 1px solid rgba(34,197,94,0.2); }
+.maint  .role-icon-wrap  { background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.2); }
+.admin  .role-icon-wrap  { background: rgba(240,192,64,0.1); border: 1px solid rgba(240,192,64,0.2); }
+
+.role-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 4px;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  position: relative;
+  z-index: 1;
+}
+.worker .role-label  { color: var(--worker-c); }
+.maint  .role-label  { color: var(--maint-c); }
+.admin  .role-label  { color: var(--admin-c); }
+
+.role-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 32px;
+  letter-spacing: 3px;
+  line-height: 1;
+  color: var(--text);
+  margin-bottom: 12px;
+  position: relative;
+  z-index: 1;
+}
+
+.role-desc {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--label);
+  line-height: 1.6;
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 1;
+  flex: 1;
+}
+
+.role-perms {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 1;
+}
+.perm-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+}
+.perm-item .perm-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.worker .perm-dot { background: var(--worker-c); }
+.maint  .perm-dot { background: var(--maint-c); }
+.admin  .perm-dot { background: var(--admin-c); }
+
+.role-enter-btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 17px;
+  letter-spacing: 3px;
+  cursor: pointer;
+  transition: all var(--transition);
+  position: relative;
+  z-index: 1;
+}
+.worker .role-enter-btn { background: var(--worker-c);  color: #080e08; }
+.maint  .role-enter-btn { background: var(--maint-c);  color: #0f0802; }
+.admin  .role-enter-btn { background: var(--admin-c);  color: #0f0b02; }
+
+.worker .role-enter-btn:hover { background: #4ade80; }
+.maint  .role-enter-btn:hover { background: #fb923c; }
+.admin  .role-enter-btn:hover { background: #fcd34d; }
+
+/* ══════════════════════════════════════════════════════════
+   LOGIN MODAL
+══════════════════════════════════════════════════════════ */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.72);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
+  backdrop-filter: blur(6px);
+}
+[data-theme="day"] .modal-backdrop { background: rgba(0,0,0,0.45); }
+.modal-backdrop.open { opacity: 1; pointer-events: all; }
+
+.modal {
+  width: 420px;
+  max-width: calc(100vw - 40px);
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  overflow: hidden;
+  transform: translateY(24px) scale(0.97);
+  transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1);
+  position: relative;
+}
+.modal-backdrop.open .modal {
+  transform: translateY(0) scale(1);
+}
+
+.modal-stripe {
+  height: 4px;
+  width: 100%;
+}
+.modal-stripe.worker { background: linear-gradient(90deg, var(--worker-c), rgba(34,197,94,0.3)); }
+.modal-stripe.maint  { background: linear-gradient(90deg, var(--maint-c), rgba(249,115,22,0.3)); }
+.modal-stripe.admin  { background: linear-gradient(90deg, var(--admin-c), rgba(240,192,64,0.3)); }
+
+.modal-body {
+  padding: 32px 36px 36px;
+}
+
+.modal-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 3px;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+.modal-role-badge.worker { background: rgba(34,197,94,0.1);  color: var(--worker-c); border: 1px solid rgba(34,197,94,0.2); }
+.modal-role-badge.maint  { background: rgba(249,115,22,0.1); color: var(--maint-c);  border: 1px solid rgba(249,115,22,0.2); }
+.modal-role-badge.admin  { background: rgba(240,192,64,0.1); color: var(--admin-c);  border: 1px solid rgba(240,192,64,0.2); }
+
+.modal-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 36px;
+  letter-spacing: 3px;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.modal-hint {
+  font-size: 12px;
+  color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+  margin-bottom: 28px;
+  letter-spacing: 0.5px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.input-group label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--label);
+}
+.input-group input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  padding: 11px 14px;
+  border-radius: 7px;
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  width: 100%;
+}
+.input-group input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.input-group input.error {
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px rgba(239,68,68,0.12);
+}
+
+.modal-error {
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.25);
+  border-radius: 7px;
+  padding: 10px 14px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--red);
+  margin-bottom: 16px;
+  display: none;
+  letter-spacing: 0.5px;
+}
+.modal-error.visible { display: block; }
+
+.modal-submit {
+  width: 100%;
+  padding: 13px;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  letter-spacing: 4px;
+  cursor: pointer;
+  transition: all var(--transition);
+  margin-top: 8px;
+}
+.modal-submit.worker { background: var(--worker-c); color: #030d05; }
+.modal-submit.maint  { background: var(--maint-c);  color: #100500; }
+.modal-submit.admin  { background: var(--admin-c);  color: #100900; }
+.modal-submit:hover  { filter: brightness(1.1); transform: translateY(-1px); }
+.modal-submit:active { transform: translateY(0); }
+.modal-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 36px;
+  border-top: 1px solid var(--border);
+  background: var(--surface2);
+}
+.modal-footer-hint {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+}
+.modal-close {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  padding: 5px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.modal-close:hover { border-color: var(--label); color: var(--text); }
+
+/* ══════════════════════════════════════════════════════════
+   CORNER DECORATIONS
+══════════════════════════════════════════════════════════ */
+.corner-tag {
+  position: fixed;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  border-radius: 4px;
+  z-index: 100;
+  opacity: 0.6;
+}
+.corner-tl { top: 70px; left: 20px; }
+.corner-tr { top: 70px; right: 20px; text-align: right; }
+.corner-bl { bottom: 20px; left: 20px; }
+.corner-br { bottom: 20px; right: 20px; }
+
+/* ══════════════════════════════════════════════════════════
+   FOOTER BAR
+══════════════════════════════════════════════════════════ */
+.footer-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 44px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  z-index: 100;
+}
+.footer-left, .footer-right {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.footer-accent { color: var(--accent); }
+.footer-sep { width: 1px; height: 14px; background: var(--border); }
+
+/* ══════════════════════════════════════════════════════════
+   ANIMATIONS
+══════════════════════════════════════════════════════════ */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ══════════════════════════════════════════════════════════
+   LOADING SCREEN
+══════════════════════════════════════════════════════════ */
+#loader {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  transition: opacity 0.5s ease;
+}
+#loader.done { opacity: 0; pointer-events: none; }
+
+.loader-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 52px;
+  letter-spacing: 8px;
+  color: var(--accent);
+  animation: loader-pulse 1s ease-in-out infinite;
+}
+@keyframes loader-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+.loader-bar-wrap {
+  width: 200px;
+  height: 2px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.loader-bar {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  animation: loader-fill 1.2s ease forwards;
+}
+@keyframes loader-fill { from{width:0%} to{width:100%} }
+
+.loader-text {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--muted);
+  animation: loader-text-blink 0.8s steps(1) infinite;
+}
+@keyframes loader-text-blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* ══════════════════════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════════════════════ */
+@media (max-width: 760px) {
+  .role-grid { grid-template-columns: 1fr; max-width: 400px; }
+  .hero-title { font-size: 64px; }
+  .topbar { padding: 0 16px; }
+  .corner-tag { display: none; }
+  .date-display { display: none; }
+  .status-bar { flex-wrap: wrap; gap: 12px; }
+  .status-sep { display: none; }
+}
+@media (max-width: 900px) and (min-width: 761px) {
+  .role-grid { grid-template-columns: 1fr 1fr; max-width: 680px; }
+  .role-grid .role-card:last-child { grid-column: 1 / -1; max-width: 320px; justify-self: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Loading Screen ───────────────────────────────────── -->
+<div id="loader">
+  <div class="loader-logo">MFG</div>
+  <div class="loader-bar-wrap"><div class="loader-bar"></div></div>
+  <div class="loader-text">INITIALIZING SYSTEM</div>
+</div>
+
+<!-- ── Background layers ──────────────────────────────── -->
+<div class="grid-bg"></div>
+<div class="scanline-overlay"></div>
+<div class="hero-glow"></div>
+
+<!-- ── Corner tags ─────────────────────────────────────── -->
+<div class="corner-tag corner-tl">SYS:ONLINE</div>
+<div class="corner-tag corner-tr" id="cornerDate">--/--/----</div>
+<div class="corner-tag corner-bl">VER 2.0.1</div>
+<div class="corner-tag corner-br">3 ROLES · 1 SYSTEM</div>
+
+<!-- ── Top Bar ─────────────────────────────────────────── -->
+<header class="topbar">
+  <div class="topbar-logo">
+    MFG<span class="logo-ops">OPS</span>
+    <div class="logo-sep"></div>
+    <div class="logo-sub">OPERATIONS<br>PORTAL</div>
+  </div>
+  <div class="topbar-right">
+    <div class="date-display" id="topDate">--</div>
+    <div class="clock-display" id="topClock">--:--:--</div>
+    <button class="theme-btn" id="themeToggle" onclick="toggleTheme()">
+      <span class="icon" id="themeIcon">☀️</span>
+      <span id="themeLabel">DAY</span>
+    </button>
+  </div>
+</header>
+
+<!-- ── Hero ────────────────────────────────────────────── -->
+<main class="hero">
+  <div class="hero-eyebrow">Manufacturing Operations System</div>
+
+  <h1 class="hero-title">
+    <span class="line1">SELECT</span>
+    <span class="line2">YOUR ROLE</span>
+  </h1>
+
+  <p class="hero-sub">
+    Access your workspace. Each role has specific permissions and tools tailored to your responsibilities on the floor.
+  </p>
+
+  <!-- Status bar -->
+  <div class="status-bar">
+    <div class="status-item">
+      <div class="status-dot green"></div>
+      <span>SYSTEM <span class="status-val">ONLINE</span></span>
+    </div>
+    <div class="status-sep"></div>
+    <div class="status-item">
+      <div class="status-dot amber"></div>
+      <span>SHIFT <span class="status-val" id="shiftLabel">--</span></span>
+    </div>
+    <div class="status-sep"></div>
+    <div class="status-item">
+      <div class="status-dot blue"></div>
+      <span>PORTAL <span class="status-val">v2.0</span></span>
+    </div>
+    <div class="status-sep"></div>
+    <div class="status-item">
+      <span>CONNECTED TO <span class="status-val" id="sheetStatus">NOT CONFIGURED</span></span>
+    </div>
+  </div>
+
+  <!-- Role Cards -->
+  <div class="role-grid">
+
+    <!-- Worker -->
+    <div class="role-card worker" onclick="openModal('worker')">
+      <div class="role-icon-wrap">👷</div>
+      <div class="role-label">// ROLE-01</div>
+      <div class="role-name">Worker</div>
+      <div class="role-desc">Submit daily work logs, track production output, report defects and NCMs from the shop floor.</div>
+      <div class="role-perms">
+        <div class="perm-item"><div class="perm-dot"></div>Submit work logs</div>
+        <div class="perm-item"><div class="perm-dot"></div>View assigned orders</div>
+        <div class="perm-item"><div class="perm-dot"></div>Raise NCM entries</div>
+        <div class="perm-item"><div class="perm-dot"></div>Report escalations</div>
+      </div>
+      <button class="role-enter-btn" onclick="openModal('worker'); event.stopPropagation()">ENTER PORTAL →</button>
+    </div>
+
+    <!-- Maintainer -->
+    <div class="role-card maint" onclick="openModal('maint')">
+      <div class="role-icon-wrap">🔧</div>
+      <div class="role-label">// ROLE-02</div>
+      <div class="role-name">Maintainer</div>
+      <div class="role-desc">Manage the worker registry, customer master, and purchase orders. Keep system data accurate.</div>
+      <div class="role-perms">
+        <div class="perm-item"><div class="perm-dot"></div>Add / edit workers</div>
+        <div class="perm-item"><div class="perm-dot"></div>Manage customers</div>
+        <div class="perm-item"><div class="perm-dot"></div>Create job orders / POs</div>
+        <div class="perm-item"><div class="perm-dot"></div>System data management</div>
+      </div>
+      <button class="role-enter-btn" onclick="openModal('maint'); event.stopPropagation()">ENTER PORTAL →</button>
+    </div>
+
+    <!-- Admin -->
+    <div class="role-card admin" onclick="openModal('admin')">
+      <div class="role-icon-wrap">🛡️</div>
+      <div class="role-label">// ROLE-03</div>
+      <div class="role-name">Admin</div>
+      <div class="role-desc">Full system access. Dashboard analytics, KPI tracking, NCM reports, escalations, and all worker activity.</div>
+      <div class="role-perms">
+        <div class="perm-item"><div class="perm-dot"></div>Analytics dashboard</div>
+        <div class="perm-item"><div class="perm-dot"></div>All roles included</div>
+        <div class="perm-item"><div class="perm-dot"></div>NCM &amp; escalation reports</div>
+        <div class="perm-item"><div class="perm-dot"></div>System configuration</div>
+      </div>
+      <button class="role-enter-btn" onclick="openModal('admin'); event.stopPropagation()">ENTER PORTAL →</button>
+    </div>
+
+  </div>
+</main>
+
+<!-- ── Footer ──────────────────────────────────────────── -->
+<div class="footer-bar">
+  <div class="footer-left">
+    <span class="footer-accent">MFG OPS</span>
+    <div class="footer-sep"></div>
+    <span>MANUFACTURING OPERATIONS SYSTEM</span>
+  </div>
+  <div class="footer-right">
+    <span>THEME: <span class="footer-accent" id="footerTheme">NIGHT</span></span>
+    <div class="footer-sep"></div>
+    <span id="footerClock">--:--:--</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     LOGIN MODAL
+══════════════════════════════════════════════════════════ -->
+<div class="modal-backdrop" id="modalBackdrop" onclick="handleBackdropClick(event)">
+  <div class="modal" id="loginModal">
+    <div class="modal-stripe" id="modalStripe"></div>
+    <div class="modal-body">
+      <div class="modal-role-badge" id="modalBadge"></div>
+      <div class="modal-title" id="modalTitle">SIGN IN</div>
+      <div class="modal-hint" id="modalHint">Enter your credentials to access the portal</div>
+
+      <div id="modalError" class="modal-error">⚠ Incorrect credentials — try again</div>
+
+      <div class="input-group">
+        <label>USERNAME</label>
+        <input type="text" id="loginUser" placeholder="username" autocomplete="username">
+      </div>
+      <div class="input-group">
+        <label>PASSWORD</label>
+        <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
+      </div>
+
+      <button class="modal-submit" id="modalSubmit" onclick="attemptLogin()">ENTER →</button>
+    </div>
+    <div class="modal-footer">
+      <div class="modal-footer-hint" id="modalFooterHint"></div>
+      <button class="modal-close" onclick="closeModal()">✕ CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ══════════════════════════════════════════════════════════
+//  CREDENTIALS — hardcoded fallback when sheet not connected
+//  Admin can also access Worker and Maintainer pages
+// ══════════════════════════════════════════════════════════
+const DEFAULT_ROLE_CREDS = {
+  worker: [
+    { user: 'worker',  pass: 'work2024'  },
+    { user: 'ravi',    pass: 'ravi2024'  },
+    { user: 'arjun',   pass: 'arjun2024' },
+    { user: 'john',    pass: 'john2024'  },
+    { user: 'sarah',   pass: 'sarah2024' },
+    { user: 'admin',   pass: 'admin123'  },
+    { user: 'manager', pass: 'ops2024'   },
+  ],
+  maint: [
+    { user: 'maintainer', pass: 'maint2024' },
+    { user: 'manager',    pass: 'ops2024'   },
+    { user: 'admin',      pass: 'admin123'  },
+  ],
+  admin: [
+    { user: 'admin',   pass: 'admin123' },
+    { user: 'manager', pass: 'ops2024'  },
+  ],
+};
+
+// In-memory cache of users loaded from the Users sheet (keyed by username)
+let _sheetUsers = null;   // null = not loaded yet; [] = loaded but empty
+
+// ── Load Users from Google Sheet (once per page load) ───────────────────────
+async function loadSheetUsers() {
+  if (_sheetUsers !== null) return; // already loaded or attempted
+  const url = localStorage.getItem('mfgops_script_url') || '';
+  const key = localStorage.getItem('mfgops_api_key')    || '';
+  if (!url || url === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+    _sheetUsers = []; // no URL — use defaults
+    return;
+  }
+  try {
+    const qs = new URLSearchParams({ action: 'getUsers', ...(key ? { apiKey: key } : {}) });
+    const res = await fetch(url + '?' + qs, { redirect: 'follow' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    _sheetUsers = (data && Array.isArray(data.users)) ? data.users.filter(u => u.active !== false) : [];
+    console.log('[portal] Loaded', _sheetUsers.length, 'users from sheet');
+  } catch (e) {
+    console.warn('[portal] Could not load sheet users, using defaults:', e.message);
+    _sheetUsers = [];
+  }
+}
+
+// ── Resolve creds for a role — sheet users take priority over defaults ───────
+function matchCred(role, user, pass) {
+  // First: check Users sheet (supports roles: pages field contains the role)
+  if (_sheetUsers && _sheetUsers.length > 0) {
+    const su = _sheetUsers.find(u =>
+      u.username.toLowerCase() === user &&
+      u.password === pass &&
+      (u.role === 'admin' || u.role === 'manager' ||
+       (u.pages || u.role || '').toLowerCase().includes(role))
+    );
+    if (su) return su;
+  }
+  // Fallback: hardcoded defaults
+  const defaults = DEFAULT_ROLE_CREDS[role] || [];
+  return defaults.find(c => c.user === user && c.pass === pass) || null;
+}
+
+// Target pages — relative to index.html
+const ROLE_PAGES = {
+  worker: 'worker_log_form.html',
+  maint:  'maintainer_form.html',
+  admin:  'admin_dashboard.html',
+};
+
+// ══════════════════════════════════════════════════════════
+//  SPA ROUTER — URL always stays as index.html
+//  Pages are loaded into a hidden iframe; URL is masked with
+//  history.pushState so the actual .html filenames are never visible.
+// ══════════════════════════════════════════════════════════
+const SPA_TITLES = {
+  worker: 'MFG OPS — Worker Portal',
+  maint:  'MFG OPS — Maintainer',
+  admin:  'MFG OPS — Admin Dashboard',
+};
+
+function launchPage(role, page) {
+  // Create or reuse iframe shell
+  let shell = document.getElementById('spaShell');
+  if (!shell) {
+    shell = document.createElement('div');
+    shell.id = 'spaShell';
+    shell.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#070910;';
+    document.body.appendChild(shell);
+
+    const iframe = document.createElement('iframe');
+    iframe.id = 'spaFrame';
+    iframe.style.cssText = 'width:100%;height:100%;border:none;';
+    shell.appendChild(iframe);
+  }
+
+  const iframe = document.getElementById('spaFrame');
+  // Mask the URL — always shows index.html
+  const fakeState = { role, page, ts: Date.now() };
+  history.pushState(fakeState, SPA_TITLES[role] || 'MFG OPS', window.location.pathname);
+  document.title = SPA_TITLES[role] || 'MFG OPS';
+
+  shell.style.display = 'block';
+  iframe.src = page;
+}
+
+// Handle browser back/forward — when user presses Back from a child page,
+// history.popstate fires; if the state is the portal root, show the landing page again.
+window.addEventListener('popstate', function(e) {
+  const shell = document.getElementById('spaShell');
+  if (!e.state || !e.state.role) {
+    // Back to portal root
+    if (shell) shell.style.display = 'none';
+    document.title = 'MFG OPS — Operations Portal';
+  }
+});
+
+const ROLE_META = {
+  worker: {
+    icon: '👷', label: '// ROLE-01', name: 'Worker Portal',
+    hint: 'Use your assigned worker credentials',
+    footer: 'Default: worker / work2024',
+  },
+  maint: {
+    icon: '🔧', label: '// ROLE-02', name: 'Maintainer Portal',
+    hint: 'Use your maintainer credentials',
+    footer: 'Default: maintainer / maint2024',
+  },
+  admin: {
+    icon: '🛡️', label: '// ROLE-03', name: 'Admin Dashboard',
+    hint: 'Full system access — admin only',
+    footer: 'Default: admin / admin123',
+  },
+};
+
+let activeRole = null;
+
+// ══════════════════════════════════════════════════════════
+//  MODAL
+// ══════════════════════════════════════════════════════════
+function openModal(role) {
+  activeRole = role;
+  const meta = ROLE_META[role];
+
+  // Set stripe + badge class
+  document.getElementById('modalStripe').className = 'modal-stripe ' + role;
+  const badge = document.getElementById('modalBadge');
+  badge.className = 'modal-role-badge ' + role;
+  badge.textContent = meta.label;
+
+  document.getElementById('modalTitle').textContent   = meta.name.toUpperCase();
+  document.getElementById('modalHint').textContent    = meta.hint;
+  // Show sheet users status if loaded, otherwise show default hint
+  const footerHint = document.getElementById('modalFooterHint');
+  if (_sheetUsers && _sheetUsers.length > 0) {
+    footerHint.textContent = '✓ ' + _sheetUsers.length + ' users from Google Sheet';
+    footerHint.style.color = 'var(--green, #22c55e)';
+  } else {
+    footerHint.textContent = meta.footer;
+    footerHint.style.color = '';
+  }
+
+  const btn = document.getElementById('modalSubmit');
+  btn.className = 'modal-submit ' + role;
+
+  // Reset fields
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+  document.getElementById('loginUser').className = '';
+  document.getElementById('loginPass').className = '';
+  document.getElementById('modalError').classList.remove('visible');
+
+  document.getElementById('modalBackdrop').classList.add('open');
+  setTimeout(() => document.getElementById('loginUser').focus(), 100);
+}
+
+function closeModal() {
+  document.getElementById('modalBackdrop').classList.remove('open');
+  activeRole = null;
+}
+
+function handleBackdropClick(e) {
+  if (e.target === document.getElementById('modalBackdrop')) closeModal();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  if (e.key === 'Enter' && document.getElementById('modalBackdrop').classList.contains('open')) {
+    attemptLogin();
+  }
+});
+
+// ══════════════════════════════════════════════════════════
+//  LOGIN LOGIC
+// ══════════════════════════════════════════════════════════
+async function attemptLogin() {
+  if (!activeRole) return;
+
+  const user = document.getElementById('loginUser').value.trim().toLowerCase();
+  const pass = document.getElementById('loginPass').value;
+  const btn  = document.getElementById('modalSubmit');
+
+  if (!user || !pass) {
+    document.getElementById('loginUser').classList.toggle('error', !user);
+    document.getElementById('loginPass').classList.toggle('error', !pass);
+    return;
+  }
+
+  // Show a brief checking state
+  btn.textContent = 'CHECKING…';
+  btn.disabled    = true;
+
+  // Ensure sheet users are loaded (cached after first call)
+  await loadSheetUsers();
+
+  const match = matchCred(activeRole, user, pass);
+
+  if (match) {
+    btn.textContent = 'AUTHENTICATED ✓';
+    // Store session — use role field from sheet user if available
+    const sessionRole = (match.role === 'admin' || match.role === 'manager') ? match.role : activeRole;
+    localStorage.setItem('mfgops_session', JSON.stringify({
+      user, role: sessionRole, ts: Date.now()
+    }));
+
+    setTimeout(() => {
+      launchPage(activeRole, ROLE_PAGES[activeRole]);
+      closeModal();
+    }, 380);
+  } else {
+    btn.textContent = 'ENTER →';
+    btn.disabled    = false;
+
+    const errEl = document.getElementById('modalError');
+    errEl.classList.add('visible');
+    document.getElementById('loginUser').classList.add('error');
+    document.getElementById('loginPass').classList.add('error');
+    document.getElementById('loginPass').value = '';
+
+    // Shake the modal
+    const modal = document.getElementById('loginModal');
+    modal.style.animation = 'none';
+    modal.offsetHeight;
+    modal.style.animation = 'shake 0.4s ease';
+
+    setTimeout(() => {
+      document.getElementById('loginUser').classList.remove('error');
+      document.getElementById('loginPass').classList.remove('error');
+      errEl.classList.remove('visible');
+      modal.style.animation = '';
+    }, 3000);
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+//  THEME
+// ══════════════════════════════════════════════════════════
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  const icon  = document.getElementById('themeIcon');
+  const label = document.getElementById('themeLabel');
+  const footer = document.getElementById('footerTheme');
+  if (t === 'day') {
+    icon.textContent  = '🌙';
+    label.textContent = 'NIGHT';
+    if (footer) footer.textContent = 'DAY';
+  } else {
+    icon.textContent  = '☀️';
+    label.textContent = 'DAY';
+    if (footer) footer.textContent = 'NIGHT';
+  }
+}
+
+function toggleTheme() {
+  const cur  = document.documentElement.getAttribute('data-theme') || 'night';
+  const next = cur === 'night' ? 'day' : 'night';
+  applyTheme(next);
+  localStorage.setItem('mfgops_theme', next);
+}
+
+// ══════════════════════════════════════════════════════════
+//  CLOCK + DATE + SHIFT
+// ══════════════════════════════════════════════════════════
+function updateClock() {
+  const now  = new Date();
+  const time = now.toLocaleTimeString('en-US', { hour12: false });
+  const date = now.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+  const dd   = now.toLocaleDateString('en-US', { day:'2-digit', month:'2-digit', year:'numeric' });
+
+  document.getElementById('topClock').textContent  = time;
+  document.getElementById('topDate').textContent   = date;
+  document.getElementById('footerClock').textContent = time;
+  document.getElementById('cornerDate').textContent  = dd;
+
+  // Shift detection
+  const h = now.getHours();
+  let shift = 'NIGHT';
+  if      (h >= 6  && h < 14) shift = 'MORNING';
+  else if (h >= 14 && h < 22) shift = 'AFTERNOON';
+  document.getElementById('shiftLabel').textContent = shift;
+}
+
+// ══════════════════════════════════════════════════════════
+//  GOOGLE SHEET CONNECTION STATUS
+// ══════════════════════════════════════════════════════════
+function checkSheetStatus() {
+  const url = localStorage.getItem('mfgops_script_url') || '';
+  const el  = document.getElementById('sheetStatus');
+  if (url && url !== 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+    el.textContent = 'CONFIGURED';
+    el.style.color = 'var(--green)';
+  } else {
+    el.textContent = 'NOT CONFIGURED';
+    el.style.color = 'var(--red)';
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════════
+// Apply stored theme immediately (before fonts load, prevents flash)
+(function() {
+  const t = localStorage.getItem('mfgops_theme') || 'night';
+  document.documentElement.setAttribute('data-theme', t);
+})();
+
+window.addEventListener('DOMContentLoaded', () => {
+  // Apply + sync theme UI
+  const savedTheme = localStorage.getItem('mfgops_theme') || 'night';
+  applyTheme(savedTheme);
+
+  // Boot sequence
+  updateClock();
+  setInterval(updateClock, 1000);
+  checkSheetStatus();
+
+  // Pre-load sheet users in background so login is instant
+  loadSheetUsers().then(() => {
+    // Update modal footer hint once users are loaded
+    if (_sheetUsers && _sheetUsers.length > 0) {
+      document.querySelectorAll('.modal-footer-hint').forEach(el => {
+        el.textContent = '✓ ' + _sheetUsers.length + ' users loaded from Google Sheet';
+        el.style.color = 'var(--green)';
+      });
+    }
+  });
+
+  // Remove loader after animation
+  setTimeout(() => {
+    document.getElementById('loader').classList.add('done');
+  }, 1400);
+});
+</script>
+
+<!-- Shake keyframe (added inline so it's always available) -->
+<style>
+@keyframes shake {
+  0%, 100% { transform: translateX(0) scale(1); }
+  20%       { transform: translateX(-8px) scale(1); }
+  40%       { transform: translateX(8px) scale(1); }
+  60%       { transform: translateX(-5px) scale(1); }
+  80%       { transform: translateX(5px) scale(1); }
+}
+</style>
+
+</body>
+</html>

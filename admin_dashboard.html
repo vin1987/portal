@@ -1,0 +1,1794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MFG OPS — Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#080a0f;--surface:#10131a;--surface2:#171b24;--surface3:#1e2230;--border:#252a38;--border2:#2e3448;--accent:#f0c040;--accent-dim:rgba(240,192,64,0.08);--accent2:#3b82f6;--green:#22c55e;--red:#ef4444;--orange:#f97316;--purple:#a855f7;--text:#e8eaf0;--muted:#6b7280;--label:#9ca3af;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;min-height:100vh;}
+input,select,textarea,button{font-family:'IBM Plex Sans',sans-serif;}
+
+/* ── LOGIN ── */
+#loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 60% 40%,rgba(240,192,64,0.06) 0%,transparent 60%),radial-gradient(ellipse at 20% 80%,rgba(59,130,246,0.05) 0%,transparent 50%),var(--bg);}
+.login-box{width:380px;background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:44px 40px;position:relative;overflow:hidden;}
+.login-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--orange),var(--accent2));}
+.login-logo{font-family:'Bebas Neue';font-size:36px;letter-spacing:5px;color:var(--accent);text-align:center;margin-bottom:4px;}
+.login-logo span{color:var(--text);}
+.login-sub{font-family:'IBM Plex Mono';font-size:10px;letter-spacing:3px;color:var(--muted);text-align:center;margin-bottom:36px;text-transform:uppercase;}
+.login-label{font-family:'IBM Plex Mono';font-size:10px;letter-spacing:2px;color:var(--label);text-transform:uppercase;display:block;margin-bottom:7px;}
+.login-input{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono';font-size:13px;padding:11px 14px;border-radius:7px;outline:none;margin-bottom:16px;transition:border-color 0.2s,box-shadow 0.2s;}
+.login-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(240,192,64,0.1);}
+.login-btn{width:100%;background:var(--accent);color:#080a0f;border:none;font-family:'Bebas Neue';font-size:20px;letter-spacing:4px;padding:13px;border-radius:7px;cursor:pointer;transition:background 0.15s,transform 0.1s,box-shadow 0.2s;margin-top:4px;}
+.login-btn:hover{background:#ffd060;box-shadow:0 6px 20px rgba(240,192,64,0.25);transform:translateY(-1px);}
+.login-error{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--red);font-family:'IBM Plex Mono';font-size:11px;padding:9px 14px;border-radius:6px;margin-top:12px;display:none;text-align:center;}
+.login-hint{font-family:'IBM Plex Mono';font-size:10px;color:var(--muted);text-align:center;margin-top:16px;line-height:1.6;}
+.login-hint strong{color:var(--label);}
+
+/* ── APP SHELL ── */
+#appShell{display:none;}
+.topbar{background:var(--surface);border-bottom:2px solid var(--accent);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;}
+.logo{font-family:'Bebas Neue';font-size:24px;letter-spacing:4px;color:var(--accent);}
+.logo span{color:var(--text);}
+.nav-tabs{display:flex;gap:3px;}
+.nav-tab{padding:6px 14px;background:transparent;border:1px solid transparent;color:var(--muted);font-family:'IBM Plex Mono';font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border-radius:5px;transition:all 0.15s;}
+.nav-tab:hover{color:var(--text);border-color:var(--border);}
+.nav-tab.active{color:var(--accent);border-color:var(--accent);background:var(--accent-dim);}
+.topbar-right{font-family:'IBM Plex Mono';font-size:11px;color:var(--muted);display:flex;align-items:center;gap:12px;}
+#clock2{color:var(--accent);font-size:13px;}
+.logout-btn{padding:5px 12px;background:transparent;border:1px solid var(--border);color:var(--muted);font-family:'IBM Plex Mono';font-size:10px;letter-spacing:1px;border-radius:5px;cursor:pointer;transition:all 0.15s;}
+.logout-btn:hover{border-color:var(--red);color:var(--red);}
+.content{padding:22px 26px;}
+.page{display:none;}
+.page.active{display:block;}
+
+/* ── PERIOD TOGGLE ── */
+.period-toggle{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:7px;overflow:hidden;width:fit-content;}
+.period-btn{padding:7px 18px;background:transparent;border:none;border-right:1px solid var(--border);color:var(--muted);font-family:'IBM Plex Mono';font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.15s;}
+.period-btn:last-child{border-right:none;}
+.period-btn.active{background:var(--accent);color:#080a0f;font-weight:700;}
+.period-btn:hover:not(.active){color:var(--text);}
+
+/* ── KPI CARDS ── */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin-bottom:20px;}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;position:relative;overflow:hidden;transition:border-color 0.15s,transform 0.15s;}
+.kpi:hover{border-color:var(--accent);transform:translateY(-1px);}
+.kpi::after{content:'';position:absolute;bottom:0;left:0;width:100%;height:2px;background:var(--kpi-color,var(--accent));}
+.kpi-label{font-family:'IBM Plex Mono';font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
+.kpi-value{font-family:'Bebas Neue';font-size:36px;letter-spacing:2px;line-height:1;color:var(--kpi-color,var(--accent));}
+.kpi-sub{font-size:11px;color:var(--muted);margin-top:3px;}
+.kpi-delta{font-size:10px;margin-top:5px;font-family:'IBM Plex Mono';}
+.kpi-delta.up{color:var(--green);}
+.kpi-delta.down{color:var(--red);}
+
+/* ── CHARTS ── */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;}
+.chart-title{font-family:'IBM Plex Mono';font-size:10px;color:var(--accent);letter-spacing:3px;text-transform:uppercase;margin-bottom:14px;}
+.bar-chart{display:flex;align-items:flex-end;gap:5px;height:90px;}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.bar{width:100%;border-radius:3px 3px 0 0;background:var(--accent);opacity:0.75;min-height:3px;transition:height 0.5s,opacity 0.15s;}
+.bar:hover{opacity:1;}
+.bar-label{font-family:'IBM Plex Mono';font-size:7px;color:var(--muted);text-align:center;}
+.bar-val{font-family:'IBM Plex Mono';font-size:8px;color:var(--label);}
+.donut-wrap{display:flex;align-items:center;gap:18px;}
+.donut-legend{display:flex;flex-direction:column;gap:8px;}
+.legend-item{display:flex;align-items:center;gap:8px;font-size:12px;}
+.legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.cust-bar-wrap{display:flex;flex-direction:column;gap:8px;}
+.cust-row{display:flex;align-items:center;gap:9px;}
+.cust-name{font-size:12px;width:96px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;}
+.cust-bar-bg{flex:1;background:var(--surface2);border-radius:3px;height:7px;overflow:hidden;}
+.cust-bar-fill{height:100%;border-radius:3px;background:var(--accent2);}
+.cust-val{font-family:'IBM Plex Mono';font-size:10px;color:var(--label);width:28px;text-align:right;flex-shrink:0;}
+.trend-chart{display:flex;align-items:flex-end;gap:3px;height:74px;}
+.trend-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
+.trend-bar{width:100%;border-radius:2px 2px 0 0;background:var(--accent);opacity:0.7;min-height:3px;transition:height 0.5s;}
+.trend-bar:hover{opacity:1;}
+.trend-label{font-family:'IBM Plex Mono';font-size:7px;color:var(--muted);text-align:center;white-space:nowrap;}
+.trend-val{font-family:'IBM Plex Mono';font-size:8px;color:var(--label);}
+
+/* ── FILTERS ── */
+.filters{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:10px;}
+.filter-group{display:flex;flex-direction:column;gap:5px;}
+.filter-group label{font-family:'IBM Plex Mono';font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
+.filter-group select,.filter-group input,.filters select,.filters input{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans';font-size:12px;padding:6px 10px;border-radius:6px;outline:none;transition:border-color 0.15s;}
+.filter-group select:focus,.filter-group input:focus{border-color:var(--accent);}
+.filters-title{font-family:'IBM Plex Mono';font-size:10px;color:var(--accent);letter-spacing:3px;text-transform:uppercase;align-self:center;}
+.active-filter-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.35);color:var(--accent2);font-family:'IBM Plex Mono';font-size:11px;padding:4px 10px;border-radius:20px;}
+.active-filter-pill button{background:none;border:none;color:var(--accent2);cursor:pointer;font-size:13px;line-height:1;padding:0;}
+
+/* ── BUTTONS ── */
+.btn-small{padding:7px 14px;background:var(--accent);color:#080a0f;border:none;font-family:'IBM Plex Mono';font-size:10px;letter-spacing:2px;border-radius:5px;cursor:pointer;font-weight:600;transition:background 0.15s;white-space:nowrap;}
+.btn-small:hover{background:#ffd060;}
+.btn-outline{padding:7px 14px;background:transparent;color:var(--muted);border:1px solid var(--border);font-family:'IBM Plex Mono';font-size:10px;letter-spacing:2px;border-radius:5px;cursor:pointer;transition:all 0.15s;}
+.btn-outline:hover{color:var(--text);border-color:var(--label);}
+.btn-danger{padding:7px 12px;background:transparent;color:var(--red);border:1px solid rgba(239,68,68,0.3);font-family:'IBM Plex Mono';font-size:10px;border-radius:5px;cursor:pointer;transition:all 0.15s;}
+.btn-danger:hover{background:rgba(239,68,68,0.1);}
+.btn-icon{width:28px;height:28px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:5px;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.btn-icon:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ── TABLE ── */
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.table-header{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.table-title{font-family:'IBM Plex Mono';font-size:10px;color:var(--accent);letter-spacing:3px;text-transform:uppercase;}
+.table-scroll{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead tr{background:var(--surface2);}
+th{padding:9px 12px;text-align:left;font-family:'IBM Plex Mono';font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;}
+th:hover{color:var(--text);}
+td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(240,192,64,0.025);}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:10px;font-family:'IBM Plex Mono';font-weight:600;white-space:nowrap;}
+.badge-green{background:rgba(34,197,94,0.12);color:var(--green);border:1px solid rgba(34,197,94,0.3);}
+.badge-yellow{background:rgba(240,192,64,0.12);color:var(--accent);border:1px solid rgba(240,192,64,0.3);}
+.badge-red{background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.3);}
+.badge-blue{background:rgba(59,130,246,0.12);color:var(--accent2);border:1px solid rgba(59,130,246,0.3);}
+.team-india{color:#f97316;font-size:11px;}
+.team-usa{color:var(--accent2);font-size:11px;}
+
+/* ── WORKERS ── */
+.workers-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;}
+.worker-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;transition:border-color 0.15s,transform 0.15s;}
+.worker-card:hover{border-color:var(--border2);transform:translateY(-1px);}
+.worker-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;}
+.worker-avatar{width:42px;height:42px;background:var(--surface2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;border:2px solid var(--border);}
+.worker-name{font-size:14px;font-weight:600;}
+.worker-id{font-family:'IBM Plex Mono';font-size:10px;color:var(--muted);}
+.progress-bar{background:var(--surface2);border-radius:4px;height:5px;margin:4px 0 2px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:4px;background:var(--accent);transition:width 0.6s ease;}
+.stat-row{display:flex;justify-content:space-between;margin-top:10px;}
+.stat-item{text-align:center;}
+.stat-val{font-family:'Bebas Neue';font-size:20px;color:var(--accent);}
+.stat-lbl{font-family:'IBM Plex Mono';font-size:8px;color:var(--muted);letter-spacing:1px;}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:14px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;}
+.modal-header{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:1;}
+.modal-title{font-family:'Bebas Neue';font-size:22px;letter-spacing:2px;}
+.modal-close{width:30px;height:30px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.modal-close:hover{border-color:var(--red);color:var(--red);}
+.modal-body{padding:20px 24px;}
+.modal-footer{padding:12px 24px 20px;display:flex;gap:10px;justify-content:flex-end;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.form-field{display:flex;flex-direction:column;gap:5px;}
+.form-field.full{grid-column:span 2;}
+.form-label{font-family:'IBM Plex Mono';font-size:9px;color:var(--label);letter-spacing:1.5px;text-transform:uppercase;}
+.form-label .req{color:var(--red);}
+.form-input{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans';font-size:13px;padding:8px 12px;border-radius:7px;outline:none;transition:border-color 0.15s,box-shadow 0.15s;}
+.form-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(240,192,64,0.08);}
+select.form-input option{background:var(--surface2);}
+
+/* ── STATS PAGE ── */
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
+.section-title{font-family:'Bebas Neue';font-size:26px;letter-spacing:2px;}
+.stats-section-title{font-family:'Bebas Neue';font-size:20px;letter-spacing:2px;margin-bottom:12px;color:var(--text);}
+.section-divider{border:none;border-top:1px solid var(--border);margin:24px 0;}
+.week-table{width:100%;border-collapse:collapse;font-size:12px;}
+.week-table th{font-family:'IBM Plex Mono';font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;padding:8px 12px;border-bottom:1px solid var(--border);text-align:left;}
+.week-table td{padding:8px 12px;border-bottom:1px solid var(--border);}
+.week-table tr:last-child td{border-bottom:none;}
+.month-bars{display:flex;align-items:flex-end;gap:8px;height:110px;margin-bottom:8px;}
+.month-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.month-bar{width:100%;border-radius:3px 3px 0 0;background:var(--accent);opacity:0.7;transition:height 0.6s ease;min-height:3px;}
+.month-bar:hover{opacity:1;}
+.month-bar.current{background:var(--orange);}
+.month-bar-label{font-family:'IBM Plex Mono';font-size:9px;color:var(--muted);}
+.month-bar-val{font-family:'IBM Plex Mono';font-size:8px;color:var(--label);}
+
+/* ── SETUP ── */
+.setup-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;margin-bottom:18px;}
+.setup-step{display:flex;gap:14px;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border);}
+.setup-step:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+.step-num{width:32px;height:32px;background:var(--accent);color:#080a0f;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:18px;flex-shrink:0;}
+.step-body h3{font-size:14px;font-weight:600;margin-bottom:5px;}
+.step-body p{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:8px;}
+.code-block{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-family:'IBM Plex Mono';font-size:11px;color:var(--green);overflow-x:auto;white-space:pre;line-height:1.6;}
+.config-note{background:rgba(240,192,64,0.07);border:1px solid rgba(240,192,64,0.25);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--label);margin-bottom:18px;font-family:'IBM Plex Mono';}
+.config-note span{color:var(--accent);}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:50px 20px;color:var(--muted);font-family:'IBM Plex Mono';font-size:12px;}
+.empty-icon{font-size:36px;margin-bottom:10px;opacity:0.4;}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--green);color:#fff;font-family:'IBM Plex Mono';font-size:12px;padding:10px 22px;border-radius:7px;z-index:9999;transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap;pointer-events:none;}
+#toast.show{transform:translateX(-50%) translateY(0);}
+#toast.error{background:var(--red);}
+
+@media(max-width:768px){.charts-row{grid-template-columns:1fr;}.nav-tabs{display:none;}.content{padding:12px;}.form-row{grid-template-columns:1fr;}.form-field.full{grid-column:span 1;}}
+
+/* ══ THEME: DAY MODE ══════════════════════════════════════════════════ */
+[data-theme="day"] {
+  --bg:#f0f2f5;--surface:#ffffff;--surface2:#f5f7fa;--surface3:#eef0f5;
+  --border:#d1d5e0;--border2:#b8bed0;
+  --accent:#c8960a;--accent2:#2563eb;--accent3:#7c3aed;
+  --green:#16a34a;--red:#dc2626;--orange:#ea580c;--purple:#7c3aed;
+  --text:#111827;--muted:#6b7280;--label:#374151;
+}
+[data-theme="day"] .header,[data-theme="day"] .topbar{background:#fff;border-bottom-color:var(--accent);}
+[data-theme="day"] .card,[data-theme="day"] .kpi,[data-theme="day"] .chart-card{background:#fff;}
+[data-theme="day"] .login-box{background:#fff;}
+[data-theme="day"] input,[data-theme="day"] select,[data-theme="day"] textarea{background:#f5f7fa;border-color:#d1d5e0;color:#111827;}
+[data-theme="day"] .record-item{background:#f5f7fa;border-color:#d1d5e0;}
+[data-theme="day"] .record-item:hover{border-color:#9ca3af;}
+[data-theme="day"] .tab-bar{background:#fff;border-color:#e5e7eb;}
+[data-theme="day"] .url-setup{background:#f5f7fa;border-color:#d1d5e0;}
+[data-theme="day"] .modal{background:#fff;border-color:#d1d5e0;}
+[data-theme="day"] .nav-tab{color:#6b7280;}
+[data-theme="day"] .nav-tab:hover{color:#111827;border-color:#9ca3af;}
+[data-theme="day"] .nav-tab.active{color:var(--accent);border-color:var(--accent);background:rgba(200,150,10,0.06);}
+[data-theme="day"] .period-btn.active{background:var(--accent);color:#fff;}
+[data-theme="day"] .bar,.trend-bar{background:var(--accent);}
+[data-theme="day"] .login-input{background:#f5f7fa;border-color:#d1d5e0;color:#111827;}
+[data-theme="day"] #loginScreen{background:radial-gradient(ellipse at 60% 40%,rgba(200,150,10,0.06) 0%,transparent 60%),#f0f2f5;}
+[data-theme="day"] .table-header,[data-theme="day"] .filters{background:#fff;border-color:#e5e7eb;}
+[data-theme="day"] table thead th{background:#f5f7fa;color:#374151;}
+[data-theme="day"] table tbody tr:hover td{background:#eef0f5;}
+/* ══════════════════════════════════════════════════════════════════════ */
+
+/* ── Theme Toggle Button ── */
+.theme-toggle{background:transparent;border:1px solid var(--border,#2a2f3d);color:var(--muted,#6b7280);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;padding:5px 11px;border-radius:5px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:5px;}
+.theme-toggle:hover{border-color:var(--accent,#f0c040);color:var(--accent,#f0c040);}
+.theme-toggle .t-icon{font-size:13px;}
+
+/* ── Back to Portal ── */
+.back-to-portal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted, #6b7280);
+  text-decoration: none;
+  padding: 5px 11px;
+  border: 1px solid var(--border, #2a2f3d);
+  border-radius: 5px;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+.back-to-portal:hover {
+  color: var(--accent, #f0c040);
+  border-color: var(--accent, #f0c040);
+  background: var(--accent-dim, rgba(240,192,64,0.06));
+}
+.session-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: var(--muted, #6b7280);
+  padding: 4px 9px;
+  border: 1px solid var(--border, #2a2f3d);
+  border-radius: 4px;
+  white-space: nowrap;
+}
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN ══ -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">MFG<span>OPS</span></div>
+    <div class="login-sub">Operations Management System</div>
+    <label class="login-label">Username</label>
+    <input class="login-input" id="loginUser" type="text" placeholder="Enter username" autocomplete="username">
+    <label class="login-label">Password</label>
+    <input class="login-input" id="loginPass" type="password" placeholder="Enter password" autocomplete="current-password">
+    <button class="login-btn" onclick="attemptLogin()">SIGN IN →</button>
+    <div class="login-error" id="loginError">⚠ Invalid username or password</div>
+    <div class="login-hint">Default credentials:<br><strong>admin</strong> / <strong>admin123</strong> &nbsp;·&nbsp; <strong>manager</strong> / <strong>ops2024</strong></div>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="appShell">
+<div class="topbar">
+  <div class="logo">MFG<span>OPS</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('overview',this)">Overview</button>
+    <button class="nav-tab" onclick="showPage('stats',this)">📊 Stats</button>
+    <button class="nav-tab" onclick="showPage('logs',this)">Work Logs</button>
+    <button class="nav-tab" onclick="showPage('workers',this)">Workers</button>
+    <button class="nav-tab" onclick="showPage('orders',this)">Orders</button>
+    <button class="nav-tab" onclick="showPage('backup',this)">🗄 Backup</button>
+    <button class="nav-tab" onclick="showPage('setup',this)">⚙ Setup</button>
+  </div>
+  <div class="topbar-right">
+    <span id="clock2">--:--:--</span>
+    <span id="topbarUser" style="color:var(--label)">ADMIN</span>
+    <span class="session-badge" id="sessionBadge">—</span><a class="back-to-portal" href="index.html" onclick="if(window.parent!==window){window.parent.history.back();return false;}">← PORTAL</a><button class="theme-toggle" id="themeToggle" onclick="toggleTheme()"><span class="t-icon">☀️</span> DAY</button><button class="logout-btn" onclick="logout()">LOGOUT</button>
+  </div>
+</div>
+
+<div class="content">
+
+<!-- ════ OVERVIEW ════ -->
+<div id="page-overview" class="page active">
+  <div class="config-note" id="configBanner">⚡ <span>DEMO MODE</span> — Connect to Google Sheets in Setup tab for live data.</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+    <div>
+      <div style="font-family:'Bebas Neue';font-size:30px;letter-spacing:2px;">Operations Overview</div>
+      <div id="overviewCustomerPill" style="margin-top:4px;"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <select id="ovCustomer" onchange="applyOverviewCustomer()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono';font-size:10px;padding:6px 10px;border-radius:6px;outline:none;letter-spacing:1px;">
+        <option value="">All Customers</option>
+      </select>
+      <div class="period-toggle">
+        <button class="period-btn active" onclick="setPeriod('today',this)">Today</button>
+        <button class="period-btn" onclick="setPeriod('week',this)">Week</button>
+        <button class="period-btn" onclick="setPeriod('month',this)">Month</button>
+        <button class="period-btn" onclick="setPeriod('all',this)">All</button>
+      </div>
+      <button class="btn-small" onclick="loadData()">↻ REFRESH</button>
+    </div>
+  </div>
+  <div class="kpi-row">
+    <div class="kpi" style="--kpi-color:var(--accent)"><div class="kpi-label">Total Logs</div><div class="kpi-value" id="kpi-logs">—</div><div class="kpi-sub" id="kpi-logs-sub"></div></div>
+    <div class="kpi" style="--kpi-color:var(--green)"><div class="kpi-label">Units Completed</div><div class="kpi-value" id="kpi-units">—</div><div class="kpi-sub">across orders</div></div>
+    <div class="kpi" style="--kpi-color:var(--accent2)"><div class="kpi-label">Active Workers</div><div class="kpi-value" id="kpi-workers">—</div><div class="kpi-sub">logged in period</div></div>
+    <div class="kpi" style="--kpi-color:var(--red)"><div class="kpi-label">Quality Issues</div><div class="kpi-value" id="kpi-defects">—</div><div class="kpi-sub">defects reported</div></div>
+    <div class="kpi" style="--kpi-color:var(--orange)"><div class="kpi-label">On Hold</div><div class="kpi-value" id="kpi-onhold">—</div><div class="kpi-sub">need attention</div></div>
+    <div class="kpi" style="--kpi-color:var(--purple)"><div class="kpi-label">Labor Hours</div><div class="kpi-value" id="kpi-hours">—</div><div class="kpi-sub">total hrs</div></div>
+  </div>
+  <div class="charts-row">
+    <div class="chart-card"><div class="chart-title">Operations Activity</div><div class="bar-chart" id="opBarChart"></div></div>
+    <div class="chart-card"><div class="chart-title">Team Split — India vs USA</div><div class="donut-wrap"><canvas id="donutCanvas" width="100" height="100"></canvas><div class="donut-legend" id="donutLegend"></div></div></div>
+  </div>
+  <div class="charts-row">
+    <div class="chart-card"><div class="chart-title">Units by Customer</div><div class="cust-bar-wrap" id="custBarChart"></div></div>
+    <div class="chart-card"><div class="chart-title">Daily Trend — Last 14 Days</div><div class="trend-chart" id="trendChart"></div></div>
+  </div>
+  <div class="table-wrap">
+    <div class="table-header"><span class="table-title">Recent Entries</span><div style="display:flex;gap:8px;align-items:center;"><span id="recentPeriodLabel" style="font-family:'IBM Plex Mono';font-size:10px;color:var(--muted)"></span><button class="btn-small" onclick="loadData()">↻</button></div></div>
+    <div class="table-scroll"><table><thead><tr><th>DATE</th><th>WORKER</th><th>TEAM</th><th>CUSTOMER</th><th>ORDER</th><th>OPERATIONS</th><th>QTY ✓</th><th>HRS</th><th>STATUS</th></tr></thead><tbody id="recentTableBody"></tbody></table></div>
+  </div>
+</div>
+
+<!-- ════ STATS ════ -->
+<div id="page-stats" class="page">
+  <div class="page-header">
+    <div class="section-title">Statistics & Trends</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <select id="statsCustomerFilter" onchange="renderStats()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono';font-size:10px;padding:6px 10px;border-radius:6px;outline:none;">
+        <option value="">All Customers</option>
+      </select>
+      <select id="statsTeamFilter" onchange="renderStats()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono';font-size:10px;padding:6px 10px;border-radius:6px;outline:none;">
+        <option value="">All Teams</option><option>India</option><option>USA</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="stats-section-title">📅 Weekly Breakdown</div>
+  <div class="kpi-row" style="grid-template-columns:repeat(4,1fr);">
+    <div class="kpi" style="--kpi-color:var(--accent)"><div class="kpi-label">This Week Units</div><div class="kpi-value" id="wk-units">—</div><div class="kpi-delta" id="wk-units-delta"></div></div>
+    <div class="kpi" style="--kpi-color:var(--accent2)"><div class="kpi-label">This Week Hours</div><div class="kpi-value" id="wk-hours">—</div><div class="kpi-delta" id="wk-hours-delta"></div></div>
+    <div class="kpi" style="--kpi-color:var(--green)"><div class="kpi-label">Jobs Completed</div><div class="kpi-value" id="wk-completed">—</div><div class="kpi-delta" id="wk-completed-delta"></div></div>
+    <div class="kpi" style="--kpi-color:var(--red)"><div class="kpi-label">Defects This Week</div><div class="kpi-value" id="wk-defects">—</div><div class="kpi-delta" id="wk-defects-delta"></div></div>
+  </div>
+  <div class="chart-card" style="margin-bottom:16px;">
+    <div class="chart-title">This Week vs Last Week — Daily Units</div>
+    <div style="display:flex;align-items:flex-end;gap:12px;height:110px;flex-wrap:wrap;" id="weekCompareChart"></div>
+  </div>
+  <div class="table-wrap" style="margin-bottom:26px;">
+    <div class="table-header"><span class="table-title">This Week — Day by Day</span></div>
+    <div class="table-scroll"><table class="week-table"><thead><tr><th>DAY</th><th>DATE</th><th>LOGS</th><th>UNITS</th><th>HOURS</th><th>DEFECTS</th><th>🇮🇳 UNITS</th><th>🇺🇸 UNITS</th><th>TOP OPERATION</th></tr></thead><tbody id="weekTableBody"></tbody></table></div>
+  </div>
+
+  <hr class="section-divider">
+
+  <div class="stats-section-title">📆 Monthly Breakdown</div>
+  <div class="kpi-row" style="grid-template-columns:repeat(5,1fr);">
+    <div class="kpi" style="--kpi-color:var(--accent)"><div class="kpi-label">This Month Units</div><div class="kpi-value" id="mo-units">—</div><div class="kpi-delta" id="mo-units-delta"></div></div>
+    <div class="kpi" style="--kpi-color:var(--accent2)"><div class="kpi-label">Month Hours</div><div class="kpi-value" id="mo-hours">—</div><div class="kpi-sub">labor hrs</div></div>
+    <div class="kpi" style="--kpi-color:var(--green)"><div class="kpi-label">Jobs Done</div><div class="kpi-value" id="mo-completed">—</div><div class="kpi-sub">completed+shipped</div></div>
+    <div class="kpi" style="--kpi-color:var(--red)"><div class="kpi-label">Defect Rate</div><div class="kpi-value" id="mo-defect-rate">—</div><div class="kpi-sub">% of output</div></div>
+    <div class="kpi" style="--kpi-color:var(--purple)"><div class="kpi-label">Overtime Hrs</div><div class="kpi-value" id="mo-overtime">—</div><div class="kpi-sub">this month</div></div>
+  </div>
+  <div class="chart-card" style="margin-bottom:16px;">
+    <div class="chart-title">Monthly Units — Last 6 Months</div>
+    <div class="month-bars" id="monthlyBars"></div>
+    <div style="display:flex;gap:4px;" id="monthlyBarLabels"></div>
+  </div>
+  <div class="table-wrap">
+    <div class="table-header"><span class="table-title">Month by Month Summary</span></div>
+    <div class="table-scroll"><table class="week-table"><thead><tr><th>MONTH</th><th>LOGS</th><th>UNITS</th><th>HOURS</th><th>OT HRS</th><th>DEFECTS</th><th>DEFECT RATE</th><th>COMPLETED</th><th>TOP CUSTOMER</th></tr></thead><tbody id="monthTableBody"></tbody></table></div>
+  </div>
+</div>
+
+<!-- ════ LOGS ════ -->
+<div id="page-logs" class="page">
+  <div class="page-header">
+    <div class="section-title">Work Logs</div>
+    <button class="btn-small" onclick="exportCSV()">⬇ EXPORT CSV</button>
+  </div>
+  <div class="filters">
+    <span class="filters-title">Filter</span>
+    <div class="filter-group"><label>CUSTOMER</label><select id="fCustomer" onchange="applyFilters()"><option value="">All Customers</option></select></div>
+    <div class="filter-group"><label>TEAM</label><select id="fTeam" onchange="applyFilters()"><option value="">All Teams</option><option>India</option><option>USA</option></select></div>
+    <div class="filter-group"><label>STATUS</label><select id="fStatus" onchange="applyFilters()"><option value="">All</option><option>Completed</option><option>In Progress</option><option>On Hold</option><option>QC Failed</option><option>Shipped</option><option>Awaiting Material</option></select></div>
+    <div class="filter-group"><label>OPERATION</label><select id="fOp" onchange="applyFilters()"><option value="">All Ops</option><option>RFQ Handling</option><option>Cutting</option><option>Bending</option><option>Welding</option><option>Punching</option><option>Forming</option><option>Quality Check</option><option>Assembly</option><option>Finishing</option><option>Shipping Prep</option><option>Shipping Monitor</option></select></div>
+    <div class="filter-group"><label>WORKER</label><select id="fWorker" onchange="applyFilters()"><option value="">All Workers</option></select></div>
+    <div class="filter-group"><label>FROM</label><input type="date" id="fDateFrom" onchange="applyFilters()"></div>
+    <div class="filter-group"><label>TO</label><input type="date" id="fDateTo" onchange="applyFilters()"></div>
+    <button class="btn-outline" onclick="clearFilters()">CLEAR</button>
+  </div>
+  <div class="table-wrap">
+    <div class="table-header"><span class="table-title">All Log Entries</span><span id="logCount" style="font-family:'IBM Plex Mono';font-size:10px;color:var(--muted)">0 records</span></div>
+    <div class="table-scroll"><table><thead><tr><th onclick="sortTable('date')">DATE</th><th onclick="sortTable('workerName')">WORKER</th><th>TEAM</th><th onclick="sortTable('customer')">CUSTOMER</th><th>ORDER</th><th>OPERATIONS</th><th onclick="sortTable('qtyCompleted')">QTY ✓</th><th onclick="sortTable('defectCount')">DEFECTS</th><th onclick="sortTable('hoursWorked')">HRS</th><th>STATUS</th><th>ESCALATION</th></tr></thead><tbody id="logsTableBody"></tbody></table></div>
+  </div>
+</div>
+
+<!-- ════ WORKERS ════ -->
+<div id="page-workers" class="page">
+  <div class="page-header">
+    <div class="section-title">Worker Management</div>
+    <button class="btn-small" onclick="openWorkerModal(null)">+ ADD WORKER</button>
+  </div>
+  <div class="filters">
+    <span class="filters-title">Filter</span>
+    <div class="filter-group"><label>TEAM</label><select id="wTeam" onchange="renderWorkers()"><option value="">All Teams</option><option>India</option><option>USA</option></select></div>
+    <div class="filter-group"><label>CUSTOMER</label><select id="wCustomer" onchange="renderWorkers()"><option value="">All Customers</option></select></div>
+    <div class="filter-group"><label>SORT BY</label><select id="wSort" onchange="renderWorkers()"><option value="units">Units</option><option value="hours">Hours</option><option value="logs">Log Count</option><option value="defects">Defects ↑</option></select></div>
+    <div class="filter-group"><label>PERIOD</label><select id="wPeriod" onchange="renderWorkers()"><option value="all">All Time</option><option value="week">This Week</option><option value="month">This Month</option></select></div>
+  </div>
+  <div class="workers-grid" id="workersGrid"></div>
+</div>
+
+<!-- ════ ORDERS ════ -->
+<div id="page-orders" class="page">
+  <div class="page-header">
+    <div class="section-title">Order Tracker</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <input id="ordSearch" type="text" placeholder="🔍 Search job / order no..." oninput="renderOrders()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono';font-size:10px;padding:6px 12px;border-radius:6px;outline:none;width:200px;">
+      <select id="ordCustomer" onchange="renderOrders()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono';font-size:10px;padding:6px 10px;border-radius:6px;outline:none;">
+        <option value="">All Customers</option>
+      </select>
+      <select id="ordStatus" onchange="renderOrders()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono';font-size:10px;padding:6px 10px;border-radius:6px;outline:none;">
+        <option value="">All Statuses</option><option>In Progress</option><option>Completed</option><option>Shipped</option><option>On Hold</option><option>QC Failed</option><option>NCM Raised</option>
+      </select>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <div class="table-header"><span class="table-title">Orders</span><span id="orderCount" style="font-family:'IBM Plex Mono';font-size:10px;color:var(--muted)">0 orders</span></div>
+    <div class="table-scroll"><table><thead><tr><th>ORDER #</th><th>CUSTOMER</th><th>PART</th><th>ASSIGNED</th><th>COMPLETED</th><th>PROGRESS</th><th>LOGS</th><th>LAST ACTIVITY</th><th>STATUS</th><th>DEFECTS</th><th>ACTION</th></tr></thead><tbody id="ordersTableBody"></tbody></table></div>
+  </div>
+</div>
+
+<!-- ════ BACKUP ════ -->
+<div id="page-backup" class="page">
+  <div class="section-title" style="margin-bottom:18px;">🗄 Data Backup & Archive</div>
+  <div class="setup-card">
+    <div style="font-family:'IBM Plex Mono';font-size:10px;color:var(--accent);letter-spacing:3px;margin-bottom:10px;">HOW IT WORKS</div>
+    <p style="font-size:12px;color:var(--label);line-height:1.8;margin-bottom:12px;">
+      Work logs older than the chosen threshold are moved to <strong>Archive_WorkLogs_YYYY</strong> sheets.<br>
+      Completed/Shipped/Cancelled POs older than the threshold are moved to <strong>Archive_POs_YYYY</strong>.<br>
+      Archive sheets are named by year so data stays organised. <strong>Source data is only deleted after a successful copy.</strong>
+    </p>
+    <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-family:'IBM Plex Mono';font-size:10px;color:var(--red);">
+      ⚠ IRREVERSIBLE — Once archived, rows are removed from the live sheet. Verify the preview before confirming.
+    </div>
+  </div>
+
+  <div class="setup-card">
+    <div style="font-family:'IBM Plex Mono';font-size:10px;color:var(--accent);letter-spacing:3px;margin-bottom:14px;">⚙ ARCHIVE SETTINGS</div>
+    <div class="form-row" style="max-width:520px;align-items:flex-end;gap:12px;flex-wrap:wrap;">
+      <div class="form-field">
+        <label class="form-label">Archive data older than</label>
+        <select class="form-input" id="archiveMonths" style="width:180px;">
+          <option value="6">6 months</option>
+          <option value="12" selected>12 months (1 year)</option>
+          <option value="18">18 months</option>
+          <option value="24">24 months (2 years)</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Archive type</label>
+        <select class="form-input" id="archiveType" style="width:180px;">
+          <option value="both">Work Logs + POs</option>
+          <option value="logs">Work Logs only</option>
+          <option value="pos">POs only</option>
+        </select>
+      </div>
+      <button class="btn-small" onclick="runBackupPreview()">🔍 PREVIEW</button>
+    </div>
+  </div>
+
+  <!-- Preview result -->
+  <div id="backupPreviewCard" class="setup-card" style="display:none;">
+    <div style="font-family:'IBM Plex Mono';font-size:10px;color:var(--accent);letter-spacing:3px;margin-bottom:14px;">📋 PREVIEW — WHAT WILL BE ARCHIVED</div>
+    <div id="backupPreviewContent"></div>
+    <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;" id="backupActionRow" style="display:none;">
+      <button class="btn-small" id="archiveLogsBtn" onclick="doArchive('logs')" style="display:none;">▶ ARCHIVE WORK LOGS</button>
+      <button class="btn-small" id="archivePOsBtn" onclick="doArchive('pos')" style="background:var(--accent2);display:none;">▶ ARCHIVE POs</button>
+      <button class="btn-small" onclick="doArchive('both')" id="archiveBothBtn" style="display:none;">▶ ARCHIVE BOTH</button>
+      <span id="archiveStatus" style="font-family:'IBM Plex Mono';font-size:11px;color:var(--muted);align-self:center;"></span>
+    </div>
+  </div>
+
+  <!-- Existing archives -->
+  <div class="setup-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div style="font-family:'IBM Plex Mono';font-size:10px;color:var(--accent);letter-spacing:3px;">📁 EXISTING ARCHIVE SHEETS</div>
+      <button class="btn-outline" onclick="loadArchiveList()">↻ REFRESH</button>
+    </div>
+    <div id="archiveListContent" style="font-family:'IBM Plex Mono';font-size:11px;color:var(--muted);">Click Refresh to load archive list.</div>
+  </div>
+</div>
+
+<!-- ════ SETUP ════ -->
+<div id="page-setup" class="page">
+  <div class="section-title" style="margin-bottom:18px;">Setup & Configuration</div>
+
+  <!-- ── Google Sheets Connection ── -->
+  <div class="setup-card">
+    <div style="font-family:'IBM Plex Mono';font-size:10px;color:var(--accent);letter-spacing:3px;margin-bottom:18px;">🔗 GOOGLE SHEETS CONNECTION</div>
+    <div class="setup-step"><div class="step-num">1</div><div class="step-body">
+      <h3>Create Google Sheet</h3>
+      <p>Go to <strong>sheets.google.com</strong> → New spreadsheet → name it <strong>MFG OPS Log</strong>.<br>
+      Copy the Sheet ID from the URL bar:<br>
+      <span style="font-family:'IBM Plex Mono';font-size:10px;color:var(--muted)">docs.google.com/spreadsheets/d/<strong style="color:var(--accent)">SHEET_ID_HERE</strong>/edit</span></p>
+    </div></div>
+    <div class="setup-step"><div class="step-num">2</div><div class="step-body">
+      <h3>Add Apps Script Backend</h3>
+      <p>Inside the sheet: <strong>Extensions → Apps Script</strong> → paste the entire <code>apps_script_backend.gs</code> file.<br>
+      Replace <code>YOUR_SHEET_ID_HERE</code> on line 15 with your Sheet ID.</p>
+      <div class="code-block">const SHEET_ID = 'your-sheet-id-here';</div>
+    </div></div>
+    <div class="setup-step"><div class="step-num">3</div><div class="step-body">
+      <h3>Deploy as Web App</h3>
+      <p><strong>Deploy → New Deployment → Web App</strong></p>
+      <div class="code-block">Execute as: Me&nbsp;&nbsp;&nbsp;&nbsp;Who has access: Anyone</div>
+      <p style="margin-top:8px;font-size:12px;color:var(--muted)">Click <strong>Authorize</strong> when prompted. Then open the Web App URL in your browser once to confirm it returns <code>{"status":"ok"}</code>.</p>
+    </div></div>
+    <div class="setup-step"><div class="step-num">4</div><div class="step-body">
+      <h3>Paste Web App URL</h3>
+      <input class="form-input" id="scriptUrlInput" type="text" placeholder="https://script.google.com/macros/s/.../exec" style="width:100%;margin-bottom:8px;">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <button class="btn-small" onclick="saveConfig()">SAVE &amp; CONNECT</button>
+        <span id="configStatus" style="font-family:'IBM Plex Mono';font-size:10px;color:var(--muted);"></span>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ── API Key Security ── -->
+  <div class="setup-card">
+    <div style="font-family:'IBM Plex Mono';font-size:10px;color:var(--accent);letter-spacing:3px;margin-bottom:14px;">🔒 API KEY — SECURE YOUR SHEET</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.7;">
+      By default, your Apps Script URL is <strong>public</strong> — anyone who finds it can read your data.<br>
+      Setting an API key means every request must include a secret token, blocking unauthorised access.
+    </p>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:14px;">
+      <div style="font-family:'IBM Plex Mono';font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:10px;">STEP-BY-STEP</div>
+      <ol style="font-size:12px;color:var(--label);line-height:2;padding-left:18px;">
+        <li>Open your Apps Script → find line: <code style="color:var(--accent)">const API_KEY = '';</code></li>
+        <li>Set it to any secret string: <code style="color:var(--accent)">const API_KEY = 'mfgops-2024-secret';</code></li>
+        <li><strong>Redeploy</strong> (Deploy → New Deployment — NOT "Edit")</li>
+        <li>Paste the same key below and save</li>
+      </ol>
+    </div>
+    <div class="form-row" style="max-width:480px;">
+      <div class="form-field" style="flex:1;">
+        <label class="form-label">API KEY (leave blank if not using)</label>
+        <input class="form-input" id="cfgApiKey" type="password" placeholder="e.g. mfgops-2024-secret" autocomplete="off">
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:10px;">
+      <button class="btn-small" onclick="saveApiKey()">SAVE API KEY</button>
+      <span id="apiKeyStatus" style="font-family:'IBM Plex Mono';font-size:10px;color:var(--muted);"></span>
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-top:10px;">
+      ⚠ The key is stored in your browser localStorage — it is NOT transmitted unless you make a request.
+      Make sure every device/browser that uses this dashboard has the same key saved here.
+    </p>
+  </div>
+
+  <!-- ── User Management ── -->
+  <div class="setup-card">
+    <div style="font-family:'IBM Plex Mono';font-size:10px;color:var(--accent);letter-spacing:3px;margin-bottom:14px;">👥 USER MANAGEMENT</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.7;">
+      Manage usernames and passwords for <strong>all three pages</strong> (Admin, Maintainer, Worker) from one place.<br>
+      Users are stored in a <strong>Users sheet</strong> in Google Sheets — edit directly in the sheet or use the form below.
+    </p>
+
+    <!-- How users work -->
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:16px;">
+      <div style="font-family:'IBM Plex Mono';font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:10px;">HOW IT WORKS</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+        <div style="font-size:11px;color:var(--label);">
+          <div style="color:var(--green);font-family:'IBM Plex Mono';font-size:9px;margin-bottom:4px;">ROLE: admin</div>
+          Pages: admin, maintainer, worker<br>Credentials: admin / admin123
+        </div>
+        <div style="font-size:11px;color:var(--label);">
+          <div style="color:var(--warning);font-family:'IBM Plex Mono';font-size:9px;margin-bottom:4px;">ROLE: maintainer</div>
+          Pages: maintainer<br>Credentials: maintainer / maint2024
+        </div>
+        <div style="font-size:11px;color:var(--label);">
+          <div style="color:var(--accent2);font-family:'IBM Plex Mono';font-size:9px;margin-bottom:4px;">ROLE: worker</div>
+          Pages: worker<br>Credentials: worker / work2024
+        </div>
+      </div>
+      <p style="font-size:11px;color:var(--muted);margin-top:10px;">
+        The portal login page always checks credentials in this order:<br>
+        1. <strong>Users sheet</strong> (live, if connected) &nbsp;→&nbsp; 2. Built-in defaults (fallback)
+      </p>
+    </div>
+
+    <!-- Add / Edit user form -->
+    <div style="font-family:'IBM Plex Mono';font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:10px;">ADD / EDIT USER</div>
+    <div class="form-row" style="max-width:600px;flex-wrap:wrap;">
+      <div class="form-field"><label class="form-label">Username *</label><input class="form-input" id="uUsername" placeholder="e.g. ravi"></div>
+      <div class="form-field"><label class="form-label">Password *</label><input class="form-input" type="password" id="uPassword" placeholder="••••••••" autocomplete="new-password"></div>
+      <div class="form-field"><label class="form-label">Role</label>
+        <select class="form-input" id="uRole">
+          <option value="worker">worker</option>
+          <option value="maintainer">maintainer</option>
+          <option value="admin">admin</option>
+          <option value="manager">manager</option>
+        </select>
+      </div>
+      <div class="form-field"><label class="form-label">Full Name</label><input class="form-input" id="uFullName" placeholder="Full name"></div>
+      <div class="form-field"><label class="form-label">Pages (comma-sep)</label><input class="form-input" id="uPages" placeholder="worker,maintainer,admin"></div>
+      <div class="form-field"><label class="form-label">Active</label>
+        <select class="form-input" id="uActive"><option value="true">Yes</option><option value="false">No</option></select>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;">
+      <button class="btn-small" onclick="pushUser()">SAVE USER TO SHEET</button>
+      <button class="btn-outline" onclick="clearUserForm()">CLEAR</button>
+      <span id="userSaveStatus" style="font-family:'IBM Plex Mono';font-size:10px;color:var(--muted);"></span>
+    </div>
+
+    <!-- Local fallback credentials (browser only) -->
+    <hr style="border:none;border-top:1px solid var(--border);margin:18px 0;">
+    <div style="font-family:'IBM Plex Mono';font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:10px;">BROWSER-ONLY FALLBACK CREDENTIALS</div>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:10px;">
+      These credentials are stored only in this browser's localStorage and are used when Google Sheets is not connected.
+    </p>
+    <div class="form-row" style="max-width:460px;">
+      <div class="form-field"><label class="form-label">Username</label><input class="form-input" id="cfgUsername" placeholder="admin"></div>
+      <div class="form-field"><label class="form-label">Password</label><input class="form-input" type="password" id="cfgPassword" placeholder="••••••••"></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:10px;">
+      <button class="btn-small" onclick="saveCredentials()">SAVE LOCAL CREDENTIALS</button>
+      <span id="credStatus" style="font-family:'IBM Plex Mono';font-size:10px;color:var(--muted);margin-left:6px;"></span>
+    </div>
+  </div>
+
+  <!-- ── Demo / Debug ── -->
+  <div class="setup-card">
+    <div style="font-family:'IBM Plex Mono';font-size:10px;color:var(--accent);letter-spacing:3px;margin-bottom:14px;">🎭 DEMO DATA</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Load 45 days of sample data to preview all dashboard features.</p>
+    <button class="btn-small" onclick="loadDemoData()">LOAD DEMO DATA</button>
+    <button class="btn-outline" style="margin-left:8px;" onclick="clearData()">CLEAR ALL DATA</button>
+  </div>
+</div>
+
+</div><!-- /content -->
+</div><!-- /appShell -->
+
+<!-- ══ WORKER MODAL ══ -->
+<div class="modal-overlay" id="workerModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="workerModalTitle">ADD WORKER</span>
+      <button class="modal-close" onclick="closeModal('workerModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-field"><label class="form-label">Worker ID <span class="req">*</span></label><input class="form-input" id="mWorkerId" placeholder="IND-001 / USA-042"></div>
+        <div class="form-field"><label class="form-label">Full Name <span class="req">*</span></label><input class="form-input" id="mWorkerName" placeholder="Full name"></div>
+        <div class="form-field"><label class="form-label">Team <span class="req">*</span></label><select class="form-input" id="mTeam"><option value="">— Select —</option><option>India</option><option>USA</option></select></div>
+        <div class="form-field"><label class="form-label">Shift</label><select class="form-input" id="mShift"><option>Morning</option><option>Afternoon</option><option>Night</option></select></div>
+        <div class="form-field"><label class="form-label">Supervisor</label><input class="form-input" id="mSupervisor" placeholder="Supervisor name"></div>
+        <div class="form-field"><label class="form-label">Primary Operation</label><select class="form-input" id="mPrimaryOp"><option value="">— Select —</option><option>RFQ Handling</option><option>Cutting</option><option>Bending</option><option>Welding</option><option>Punching</option><option>Forming</option><option>Quality Check</option><option>Assembly</option><option>Finishing</option><option>Shipping Prep</option><option>Shipping Monitor</option></select></div>
+        <div class="form-field full"><label class="form-label">Assigned Customers</label><input class="form-input" id="mCustomers" placeholder="Customer A, Customer B, ..."></div>
+        <div class="form-field full"><label class="form-label">Skills / Notes</label><textarea class="form-input" id="mNotes" rows="2" placeholder="Certifications, skills, notes..."></textarea></div>
+        <div class="form-field"><label class="form-label">Status</label><select class="form-input" id="mStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option><option value="On Leave">On Leave</option></select></div>
+        <div class="form-field"><label class="form-label">Join Date</label><input class="form-input" type="date" id="mJoinDate"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline" onclick="closeModal('workerModal')">CANCEL</button>
+      <button class="btn-small" onclick="saveWorker()">SAVE WORKER</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal" style="max-width:360px;">
+    <div class="modal-header"><span class="modal-title" style="color:var(--red)">CONFIRM DELETE</span><button class="modal-close" onclick="closeModal('confirmModal')">✕</button></div>
+    <div class="modal-body"><p style="font-size:13px;color:var(--label);line-height:1.6;">Remove <strong id="confirmWorkerName" style="color:var(--text)"></strong> from the registry? Submitted logs are kept.</p></div>
+    <div class="modal-footer"><button class="btn-outline" onclick="closeModal('confirmModal')">CANCEL</button><button class="btn-danger" onclick="confirmDeleteWorker()">DELETE</button></div>
+  </div>
+</div>
+
+<!-- ══ ORDER DETAIL MODAL ══ -->
+<div class="modal-overlay" id="orderDetailModal">
+  <div class="modal" style="max-width:920px;width:95vw;">
+    <div class="modal-header">
+      <div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <span class="modal-title" id="odTitle">ORDER</span>
+          <span id="odStatusBadge"></span>
+        </div>
+        <div style="font-family:'IBM Plex Mono';font-size:10px;color:var(--muted);margin-top:4px;" id="odSubtitle"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('orderDetailModal')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:0;">
+      <div id="odKpiStrip" style="display:grid;grid-template-columns:repeat(6,1fr);border-bottom:1px solid var(--border);"></div>
+      <div style="padding:18px 22px 22px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+          <div style="font-family:'IBM Plex Mono';font-size:10px;color:var(--accent);letter-spacing:3px;text-transform:uppercase;">Complete Activity Timeline</div>
+          <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;">
+            <select id="odTeamFilter" onchange="filterOrderDetail()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono';font-size:10px;padding:5px 9px;border-radius:5px;outline:none;"><option value="">All Teams</option><option>India</option><option>USA</option></select>
+            <select id="odWorkerFilter" onchange="filterOrderDetail()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono';font-size:10px;padding:5px 9px;border-radius:5px;outline:none;"><option value="">All Workers</option></select>
+            <button class="btn-small" onclick="exportOrderCSV()" style="font-size:9px;padding:5px 10px;">&#11015; CSV</button>
+          </div>
+        </div>
+        <div id="odOpsFlow" style="margin-bottom:14px;"></div>
+        <div id="odNcmAlert" style="display:none;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:7px;padding:9px 13px;margin-bottom:10px;font-family:'IBM Plex Mono';font-size:11px;color:var(--red);"></div>
+        <div id="odEscAlert" style="display:none;background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.25);border-radius:7px;padding:9px 13px;margin-bottom:10px;font-family:'IBM Plex Mono';font-size:11px;color:var(--orange);"></div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:16px;">
+          <div style="overflow-x:auto;">
+            <table id="odDetailTable">
+              <thead><tr>
+                <th>DATE</th><th>WORKER</th><th>TEAM</th><th>OPERATION(S)</th>
+                <th>QTY &#10003;</th><th>DEFECTS</th><th>HRS</th><th>STATUS</th>
+                <th>NCM</th><th>ESCALATION</th><th>NOTES</th>
+              </tr></thead>
+              <tbody id="odTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div style="font-family:'IBM Plex Mono';font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">Worker Contributions</div>
+        <div id="odWorkerContrib" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.od-kpi{padding:12px 14px;text-align:center;border-right:1px solid var(--border);}
+.od-kpi:last-child{border-right:none;}
+.od-kpi-val{font-family:'Bebas Neue';font-size:26px;line-height:1;}
+.od-kpi-lbl{font-family:'IBM Plex Mono';font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:2px;}
+.ops-flow{display:flex;align-items:center;flex-wrap:wrap;gap:4px;}
+.op-pill{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-family:'IBM Plex Mono';font-size:10px;background:var(--surface2);border:1px solid var(--border);color:var(--label);white-space:nowrap;}
+.op-pill.done{background:rgba(34,197,94,0.1);border-color:rgba(34,197,94,0.3);color:var(--green);}
+.op-pill.ncm{background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.3);color:var(--red);}
+.wc-card{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:10px 12px;text-align:center;}
+.wc-name{font-size:12px;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.wc-id{font-family:'IBM Plex Mono';font-size:9px;color:var(--muted);margin-bottom:6px;}
+.wc-stats{display:flex;justify-content:space-around;}
+.wc-stat-val{font-family:'Bebas Neue';font-size:18px;color:var(--accent);}
+.wc-stat-lbl{font-family:'IBM Plex Mono';font-size:8px;color:var(--muted);}
+</style>
+
+<div id="toast">✓ SAVED</div>
+
+<script>
+
+// ── Theme persistence ──
+// ── Read session from landing page & sync theme ──
+(function() {
+  const t = localStorage.getItem('mfgops_theme') || 'night';
+  document.documentElement.setAttribute('data-theme', t);
+  // Show session badge if exists
+  window.addEventListener('DOMContentLoaded', function() {
+    var sess = null;
+    try { sess = JSON.parse(localStorage.getItem('mfgops_session') || 'null'); } catch(e){}
+    if (sess) {
+      var badge = document.getElementById('sessionBadge');
+      if (badge) badge.textContent = sess.user.toUpperCase() + ' · ' + sess.role.toUpperCase();
+    }
+  });
+})();
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme') || 'night';
+  const next = cur === 'night' ? 'day' : 'night';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('mfgops_theme', next);
+  const btn = document.getElementById('themeToggle');
+  if (btn) {
+    btn.innerHTML = next === 'day'
+      ? '<span class="t-icon">🌙</span> NIGHT'
+      : '<span class="t-icon">☀️</span> DAY';
+  }
+}
+function initThemeBtn() {
+  const t   = localStorage.getItem('mfgops_theme') || 'night';
+  const btn = document.getElementById('themeToggle');
+  if (!btn) return;
+  btn.innerHTML = t === 'day'
+    ? '<span class="t-icon">🌙</span> NIGHT'
+    : '<span class="t-icon">☀️</span> DAY';
+}
+
+
+// ══════════════════════════════════════════
+//  AUTH — with portal session auto-login
+// ══════════════════════════════════════════
+const DEFAULT_CREDS=[{user:'admin',pass:'admin123',role:'Admin'},{user:'manager',pass:'ops2024',role:'Manager'}];
+let SESSION=null;
+
+function getCreds(){try{const s=localStorage.getItem('mfgops_creds');return s?JSON.parse(s):DEFAULT_CREDS;}catch{return DEFAULT_CREDS;}}
+
+// ── Auto-login if a valid portal session exists ──────────────
+function checkPortalSession() {
+  try {
+    const sess = JSON.parse(localStorage.getItem('mfgops_session') || 'null');
+    if (!sess) return false;
+    // Session must be from the last 8 hours and role must be admin/manager
+    const age = Date.now() - (sess.ts || 0);
+    if (age > 8 * 60 * 60 * 1000) return false;
+    if (sess.role !== 'admin' && sess.role !== 'manager') return false;
+    // Valid session — auto-login
+    SESSION = { user: sess.user, role: sess.role === 'admin' ? 'Admin' : 'Manager' };
+    showApp(sess.user.toUpperCase() + ' (' + SESSION.role + ')');
+    return true;
+  } catch(e) { return false; }
+}
+
+function showApp(userLabel) {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appShell').style.display    = 'block';
+  document.getElementById('topbarUser').textContent    = userLabel;
+  // Sync session badge
+  const badge = document.getElementById('sessionBadge');
+  if (badge) badge.textContent = userLabel;
+  init();
+}
+
+function attemptLogin(){
+  const user=document.getElementById('loginUser').value.trim();
+  const pass=document.getElementById('loginPass').value;
+  const match=getCreds().find(c=>c.user===user&&c.pass===pass);
+  if(match){
+    SESSION=match;
+    // Persist session so other pages can pick it up too
+    localStorage.setItem('mfgops_session', JSON.stringify({ user, role: 'admin', ts: Date.now() }));
+    showApp(match.user.toUpperCase()+' ('+match.role+')');
+  } else {
+    const err=document.getElementById('loginError');
+    err.style.display='block';
+    document.getElementById('loginPass').value='';
+    setTimeout(()=>err.style.display='none',3000);
+  }
+}
+document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')attemptLogin();});
+document.getElementById('loginUser').addEventListener('keydown',e=>{if(e.key==='Enter')attemptLogin();});
+function logout(){
+  SESSION=null;
+  localStorage.removeItem('mfgops_session');
+  document.getElementById('appShell').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('loginUser').value='';
+  document.getElementById('loginPass').value='';
+}
+function saveCredentials(){
+  const user=document.getElementById('cfgUsername').value.trim();
+  const pass=document.getElementById('cfgPassword').value;
+  if(!user||!pass){showToast('Fill both fields',true);return;}
+  const existing=getCreds().filter(c=>c.user!==user);
+  existing.push({user,pass,role:'Admin'});
+  localStorage.setItem('mfgops_creds',JSON.stringify(existing));
+  document.getElementById('credStatus').textContent='✓ Saved';
+  setTimeout(()=>document.getElementById('credStatus').textContent='',2500);
+}
+
+// ══════════════════════════════════════════
+//  CLOCK
+// ══════════════════════════════════════════
+setInterval(()=>{document.getElementById('clock2').textContent=new Date().toLocaleTimeString('en-US',{hour12:false});},1000);
+
+// ══════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════
+let allData=[],workerRegistry=[],filteredData=[],sortKey='date',sortDir=-1,currentPeriod='today',overviewCustomerFilter='',deletingWorkerId=null;
+const SCRIPT_URL_KEY='mfgops_script_url';
+let SCRIPT_URL=localStorage.getItem(SCRIPT_URL_KEY)||'';
+
+// ── Check portal session as soon as DOM is ready ──
+window.addEventListener('DOMContentLoaded', function() {
+  checkPortalSession(); // silently auto-logs in if coming from portal
+});
+
+function init(){
+  initThemeBtn();
+  initApiKeyField();
+  if(SCRIPT_URL)document.getElementById('scriptUrlInput').value=SCRIPT_URL;
+  try{const s=localStorage.getItem('mfgops_workers');if(s)workerRegistry=JSON.parse(s);}catch{}
+  if(!SCRIPT_URL)loadDemoData();else loadData();
+}
+
+// ── Demo Data ──────────────────────────────
+function buildDemoData(){
+  const today=new Date(),rows=[];
+  const pad=n=>String(n).padStart(2,'0');
+  const localDate=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+  const workers=[{id:'IND-001',name:'Ravi Kumar',team:'India',sup:'Priya S'},{id:'IND-002',name:'Arjun Mehta',team:'India',sup:'Priya S'},{id:'IND-003',name:'Vikram Singh',team:'India',sup:'Priya S'},{id:'IND-004',name:'Neha Sharma',team:'India',sup:'Priya S'},{id:'USA-001',name:'John Miller',team:'USA',sup:'Dave T'},{id:'USA-002',name:'Sarah Wilson',team:'USA',sup:'Dave T'},{id:'USA-003',name:'Mike Johnson',team:'USA',sup:'Dave T'}];
+  const customers=['Customer A','Customer B','Customer C','Customer D'];
+  const ops=[['Cutting','Bending'],['Welding','Finishing'],['Assembly','Quality Check'],['Punching','Forming'],['Shipping Prep'],['RFQ Handling','Cutting'],['Quality Check','Assembly']];
+  const statuses=['Completed','In Progress','Completed','Shipped','In Progress','Completed','On Hold','QC Failed'];
+  const orders=['JOB-2024-101','JOB-2024-102','JOB-2024-103','JOB-2024-104','JOB-2024-105','JOB-2024-106'];
+  const parts=['Side Panel','Base Plate','Frame Assembly','Enclosure Box','Bracket Set','Control Panel'];
+  for(let d=0;d<45;d++){
+    const dt=new Date(today);dt.setDate(dt.getDate()-d);
+    const ds=localDate(dt);
+    const n=2+Math.floor(Math.random()*5);
+    for(let i=0;i<n;i++){
+      const w=workers[i%workers.length];
+      const oi=Math.floor(Math.random()*orders.length);
+      const qty=10+Math.floor(Math.random()*50);
+      const completed=Math.floor(qty*(0.6+Math.random()*0.4));
+      const defects=Math.random()>0.8?Math.floor(Math.random()*3):0;
+      rows.push({timestamp:ds+'T08:00:00Z',date:ds,workerName:w.name,workerId:w.id,team:w.team,shift:['Morning','Afternoon'][i%2],supervisor:w.sup,customer:customers[oi%customers.length],orderNo:orders[oi],rfqRef:'RFQ-'+(200+oi),partName:parts[oi],qtyAssigned:qty,qtyCompleted:completed,operations:ops[i%ops.length].join(', '),timeIn:'06:00',timeOut:'14:30',breakMins:'30',hoursWorked:(7+Math.random()).toFixed(2),overtimeHrs:(Math.random()>0.7?(Math.random()).toFixed(1):'0'),jobStatus:statuses[(d+i)%statuses.length],defectCount:defects,rework:defects>0?'Yes':'No',qualityNotes:defects>0?'Minor defects':'',workNotes:'Work completed',escalation:(d===0&&i===1)?'Machine downtime 1hr':'',machine:'Machine #'+((i%3)+1),material:['SS304 2mm','MS 3mm','AL6061','GI 1.5mm'][i%4]});
+    }
+  }
+  return rows;
+}
+
+function loadDemoData(){
+  allData=buildDemoData();
+  if(!workerRegistry.length)workerRegistry=[{workerId:'IND-001',workerName:'Ravi Kumar',team:'India',shift:'Morning',supervisor:'Priya S',primaryOp:'Cutting',customers:'Customer A, Customer B',notes:'Certified laser operator',status:'Active',joinDate:'2022-03-01'},{workerId:'IND-002',workerName:'Arjun Mehta',team:'India',shift:'Morning',supervisor:'Priya S',primaryOp:'Welding',customers:'Customer B',notes:'MIG/TIG certified',status:'Active',joinDate:'2021-08-15'},{workerId:'IND-003',workerName:'Vikram Singh',team:'India',shift:'Afternoon',supervisor:'Priya S',primaryOp:'Bending',customers:'Customer A, Customer D',notes:'Press brake specialist',status:'Active',joinDate:'2020-01-10'},{workerId:'IND-004',workerName:'Neha Sharma',team:'India',shift:'Morning',supervisor:'Priya S',primaryOp:'Quality Check',customers:'Customer A, Customer B, Customer C',notes:'QC certified',status:'Active',joinDate:'2023-06-01'},{workerId:'USA-001',workerName:'John Miller',team:'USA',shift:'Afternoon',supervisor:'Dave T',primaryOp:'Assembly',customers:'Customer A, Customer C',notes:'Senior assembler',status:'Active',joinDate:'2019-05-20'},{workerId:'USA-002',workerName:'Sarah Wilson',team:'USA',shift:'Afternoon',supervisor:'Dave T',primaryOp:'Welding',customers:'Customer C',notes:'Structural welding',status:'Active',joinDate:'2021-11-01'},{workerId:'USA-003',workerName:'Mike Johnson',team:'USA',shift:'Morning',supervisor:'Dave T',primaryOp:'Shipping Prep',customers:'Customer B, Customer D',notes:'Logistics coordinator',status:'On Leave',joinDate:'2020-09-14'}];
+  renderAll();
+  document.getElementById('configBanner').innerHTML='🎭 <span>DEMO MODE</span> — 45 days of sample data loaded.';
+}
+
+function saveConfig(){
+  const url=document.getElementById('scriptUrlInput').value.trim();
+  if(!url)return;
+  SCRIPT_URL=url;
+  localStorage.setItem(SCRIPT_URL_KEY,url);
+  document.getElementById('configStatus').textContent='✓ Saved! Fetching...';
+  loadData();
+}
+
+// ── API Key helpers ──────────────────────────────────────────────────────────
+const API_KEY_KEY='mfgops_api_key';
+function getApiKey(){return localStorage.getItem(API_KEY_KEY)||'';}
+function saveApiKey(){
+  const key=document.getElementById('cfgApiKey').value.trim();
+  localStorage.setItem(API_KEY_KEY,key);
+  const st=document.getElementById('apiKeyStatus');
+  st.textContent=key?'✓ API Key saved':'✓ Cleared (no key)';
+  st.style.color=key?'var(--green)':'var(--muted)';
+  setTimeout(()=>st.textContent='',3000);
+}
+function initApiKeyField(){
+  const k=getApiKey();
+  const el=document.getElementById('cfgApiKey');
+  if(el&&k)el.value=k;
+}
+
+// ── User management (pushes to Google Sheet via gasPost) ─────────────────────
+async function pushUser(){
+  const u=document.getElementById('uUsername').value.trim();
+  const p=document.getElementById('uPassword').value;
+  if(!u){showToast('Username is required',true);return;}
+  if(!p){showToast('Password is required',true);return;}
+  if(!SCRIPT_URL){showToast('Connect Google Sheets first',true);return;}
+  const payload={
+    username:u, password:p,
+    role:document.getElementById('uRole').value,
+    fullName:document.getElementById('uFullName').value,
+    pages:document.getElementById('uPages').value||document.getElementById('uRole').value,
+    active:document.getElementById('uActive').value,
+    apiKey:getApiKey()
+  };
+  const st=document.getElementById('userSaveStatus');
+  st.textContent='Saving...';
+  try{
+    await gasPost('addUser',payload);
+    st.textContent='✓ User saved to sheet';
+    st.style.color='var(--green)';
+    setTimeout(()=>st.textContent='',3000);
+  }catch(e){
+    st.textContent='⚠ '+e.message;
+    st.style.color='var(--red)';
+  }
+}
+function clearUserForm(){
+  ['uUsername','uPassword','uFullName','uPages'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value='';
+  });
+  const role=document.getElementById('uRole');if(role)role.value='worker';
+  const active=document.getElementById('uActive');if(active)active.value='true';
+  document.getElementById('userSaveStatus').textContent='';
+}
+// ── Smart GAS Fetch — tries fetch() first, falls back to JSONP ──────────────
+async function gasFetch(action, params) {
+  const apiKey=getApiKey();
+  const allParams=Object.assign({action},params||{});
+  if(apiKey) allParams.apiKey=apiKey;
+  const qs = new URLSearchParams(allParams).toString();
+  const url = SCRIPT_URL + '?' + qs;
+  // Strategy 1: normal fetch
+  try {
+    const res = await fetch(url, { redirect: 'follow' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch (e) {
+    console.log('[GAS] fetch failed (' + e.message + '), trying JSONP...');
+  }
+  // Strategy 2: JSONP
+  return new Promise((resolve, reject) => {
+    const cb = '_mfgcb_' + Date.now();
+    const s  = document.createElement('script');
+    const t  = setTimeout(() => { cleanup(); reject(new Error('Timeout — check deployment settings')); }, 12000);
+    window[cb] = (d) => { cleanup(); resolve(d); };
+    function cleanup() { clearTimeout(t); delete window[cb]; if (s.parentNode) s.parentNode.removeChild(s); }
+    s.onerror = () => { cleanup(); reject(new Error('Script load error — re-deploy script as Web App with Anyone access')); };
+    s.src = url + '&callback=' + cb;
+    document.head.appendChild(s);
+  });
+}
+
+async function loadData(){
+  if(!SCRIPT_URL){loadDemoData();return;}
+  const banner=document.getElementById('configBanner');
+  banner.innerHTML='⏳ Connecting to Google Sheets...';
+  try{
+    // Fetch work logs, workers, and customers in parallel for freshest data
+    const [logsJson, workersJson, customersJson] = await Promise.all([
+      gasFetch('getData', {}),
+      gasFetch('getWorkers', {activeOnly:'false'}).catch(()=>null),
+      gasFetch('getCustomers', {}).catch(()=>null)
+    ]);
+
+    // Work logs
+    if(logsJson && logsJson.data && logsJson.data.length){
+      // Normalise every date field after loading — handles any format Google Sheets returns
+      allData = logsJson.data.map(r => Object.assign({}, r, { date: normaliseDate(r.date) }));
+    } else if(logsJson && logsJson.data){
+      allData=[];
+    } else {
+      banner.innerHTML='⚠ Connected but got unexpected response from getData. Check Apps Script logs.';
+      console.warn('Unexpected getData response:', logsJson);
+    }
+
+    // Fresh worker registry from sheet (overrides localStorage cache)
+    if(workersJson && workersJson.workers && workersJson.workers.length){
+      workerRegistry = workersJson.workers;
+      localStorage.setItem('mfgops_workers', JSON.stringify(workerRegistry));
+    }
+
+    renderAll();
+
+    const logCount = allData.length;
+    const workerCount = workerRegistry.length;
+    banner.innerHTML=`✅ Live · ${logCount} log entries · ${workerCount} workers · refreshed ${new Date().toLocaleTimeString()}`;
+
+  } catch(e){
+    banner.innerHTML='⚠ Cannot load data — '+e.message+'<br><small>Check: re-deployed? "Anyone" access? URL correct?</small>';
+    console.error('loadData error:', e);
+  }
+}
+function clearData(){allData=[];workerRegistry=[];renderAll();}
+
+// ══════════════════════════════════════════
+//  DATE/PERIOD HELPERS
+// ══════════════════════════════════════════
+function getDateRange(period){
+  const now=new Date();
+  // Use local date parts to avoid UTC-shift issues
+  const pad=n=>String(n).padStart(2,'0');
+  const localDate=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+  const ts=localDate(now);
+  if(period==='today') return{from:ts,to:ts};
+  if(period==='week'){
+    // Monday-based week: getDay() returns 0=Sun,1=Mon...6=Sat
+    const dow=now.getDay();                        // 0(Sun)..6(Sat)
+    const daysBack=dow===0?6:dow-1;               // Mon=0back, Tue=1back, Sun=6back
+    const mon=new Date(now);
+    mon.setDate(now.getDate()-daysBack);
+    return{from:localDate(mon),to:ts};
+  }
+  if(period==='month') return{from:ts.slice(0,7)+'-01',to:ts};
+  return{from:'2000-01-01',to:'9999-12-31'};
+}
+// ── Normalize any date string → "YYYY-MM-DD" ──────────────────────────────
+// Google Sheets may return dates in many formats depending on cell type / locale:
+//   "2026-02-24"          (ISO — ideal)
+//   "2026-02-24T06:00:00Z" (ISO with time)
+//   "02/24/2026"          (US MM/DD/YYYY)
+//   "24/02/2026"          (EU DD/MM/YYYY — ambiguous, assume DD/MM when day>12)
+//   "2/24/2026"           (US without zero-pad)
+//   "Mon Feb 24 2026…"    (toString of Date object — should not happen after rowToObj fix)
+function normaliseDate(v){
+  if(!v) return '';
+  const s = String(v).trim();
+  // Already ISO YYYY-MM-DD (possibly with time suffix)
+  if(/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
+  // MM/DD/YYYY or M/D/YYYY (US locale)
+  const usMatch = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(usMatch){
+    const [,mm,dd,yyyy]=usMatch;
+    return `${yyyy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`;
+  }
+  // DD-MM-YYYY
+  const dmyMatch = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})/);
+  if(dmyMatch){
+    const [,dd,mm,yyyy]=dmyMatch;
+    return `${yyyy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`;
+  }
+  // Fallback: try Date constructor (handles "Feb 24 2026", "February 24, 2026" etc.)
+  try{
+    const d=new Date(s);
+    if(!isNaN(d.getTime())){
+      const pad=n=>String(n).padStart(2,'0');
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    }
+  }catch(e){}
+  return '';
+}
+
+function filterByPeriod(data,period,customer=''){
+  const{from,to}=getDateRange(period);
+  return data.filter(r=>{
+    const rd = normaliseDate(r.date);
+    if(!rd||rd.length<10) return false;
+    return rd>=from && rd<=to && (!customer||r.customer===customer);
+  });
+}
+function setPeriod(p,btn){
+  currentPeriod=p;
+  document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderKPIs();renderRecentTable();renderCharts();
+}
+function applyOverviewCustomer(){
+  overviewCustomerFilter=document.getElementById('ovCustomer').value;
+  const pill=document.getElementById('overviewCustomerPill');
+  pill.innerHTML=overviewCustomerFilter?`<span class="active-filter-pill">📦 ${overviewCustomerFilter} <button onclick="clearOverviewCustomer()">×</button></span>`:'';
+  renderKPIs();renderRecentTable();renderCharts();
+}
+function clearOverviewCustomer(){overviewCustomerFilter='';document.getElementById('ovCustomer').value='';document.getElementById('overviewCustomerPill').innerHTML='';renderKPIs();renderRecentTable();renderCharts();}
+
+// ══════════════════════════════════════════
+//  RENDER ALL
+// ══════════════════════════════════════════
+function renderAll(){populateDropdowns();renderKPIs();renderRecentTable();renderCharts();renderLogsTable(allData);renderWorkers();renderOrders();renderStats();}
+
+function populateDropdowns(){
+  const customers=[...new Set(allData.map(r=>r.customer).filter(Boolean))].sort();
+  const workers=[...new Set(allData.map(r=>r.workerName).filter(Boolean))].sort();
+  ['fCustomer','ovCustomer','ordCustomer','statsCustomerFilter','wCustomer'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    const prev=el.value;
+    el.innerHTML='<option value="">All Customers</option>'+customers.map(c=>`<option${c===prev?' selected':''}>${c}</option>`).join('');
+  });
+  const fw=document.getElementById('fWorker');
+  if(fw){const prev=fw.value;fw.innerHTML='<option value="">All Workers</option>'+workers.map(w=>`<option${w===prev?' selected':''}>${w}</option>`).join('');}
+}
+
+// ══════════════════════════════════════════
+//  KPIs
+// ══════════════════════════════════════════
+function renderKPIs(){
+  const d=filterByPeriod(allData,currentPeriod,overviewCustomerFilter);
+  document.getElementById('kpi-logs').textContent=d.length;
+  document.getElementById('kpi-units').textContent=d.reduce((a,r)=>a+(parseInt(r.qtyCompleted)||0),0);
+  document.getElementById('kpi-workers').textContent=new Set(d.map(r=>r.workerId)).size;
+  document.getElementById('kpi-defects').textContent=d.reduce((a,r)=>a+(parseInt(r.defectCount)||0),0);
+  document.getElementById('kpi-onhold').textContent=d.filter(r=>r.jobStatus==='On Hold'||r.jobStatus==='QC Failed').length;
+  document.getElementById('kpi-hours').textContent=d.reduce((a,r)=>a+(parseFloat(r.hoursWorked)||0),0).toFixed(1);
+  const labels={today:'Today',week:'This Week',month:'This Month',all:'All Time'};
+  document.getElementById('kpi-logs-sub').textContent=labels[currentPeriod]||'';
+  document.getElementById('recentPeriodLabel').textContent=labels[currentPeriod];
+}
+
+// ══════════════════════════════════════════
+//  RECENT TABLE
+// ══════════════════════════════════════════
+function renderRecentTable(){
+  const d=filterByPeriod(allData,currentPeriod,overviewCustomerFilter);
+  const recent=[...d].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,15);
+  const tbody=document.getElementById('recentTableBody');
+  if(!recent.length){tbody.innerHTML='<tr><td colspan="9"><div class="empty"><div class="empty-icon">📭</div>No data for this period</div></td></tr>';return;}
+  tbody.innerHTML=recent.map(r=>`<tr>
+    <td style="font-family:'IBM Plex Mono';font-size:10px">${r.date}</td>
+    <td><strong>${r.workerName}</strong><br><span style="font-family:'IBM Plex Mono';font-size:9px;color:var(--muted)">${r.workerId}</span></td>
+    <td>${teamBadge(r.team)}</td>
+    <td>${r.customer}</td>
+    <td style="font-family:'IBM Plex Mono';font-size:10px">${r.orderNo}</td>
+    <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px" title="${r.operations}">${r.operations}</td>
+    <td style="text-align:center;font-weight:600;color:var(--green)">${r.qtyCompleted}</td>
+    <td style="font-family:'IBM Plex Mono';font-size:10px">${r.hoursWorked}</td>
+    <td>${statusBadge(r.jobStatus)}</td>
+  </tr>`).join('');
+}
+
+// ══════════════════════════════════════════
+//  CHARTS
+// ══════════════════════════════════════════
+function renderCharts(){
+  const d=filterByPeriod(allData,currentPeriod,overviewCustomerFilter);
+  // Op bars
+  const opKeys=['Cutting','Bending','Welding','Punching','Forming','Quality Check','Assembly','Finishing','Shipping Prep'];
+  const opShort=['Cut','Bend','Weld','Punch','Form','QC','Assem','Finish','Ship'];
+  const opC={};opKeys.forEach(k=>opC[k]=0);
+  d.forEach(r=>{if(r.operations)r.operations.split(',').forEach(op=>{const k=op.trim();if(opC[k]!==undefined)opC[k]++;});});
+  const maxOp=Math.max(...Object.values(opC),1);
+  document.getElementById('opBarChart').innerHTML=opKeys.map((op,i)=>{const cnt=opC[op];const h=Math.round((cnt/maxOp)*80);return`<div class="bar-wrap"><div class="bar-val">${cnt}</div><div class="bar" style="height:${h}px" title="${op}: ${cnt}"></div><div class="bar-label">${opShort[i]}</div></div>`;}).join('');
+  // Donut
+  const india=d.filter(r=>r.team==='India').length,usa=d.filter(r=>r.team==='USA').length,total=india+usa;
+  const canvas=document.getElementById('donutCanvas'),ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,100,100);
+  if(total>0){const ia=(india/total)*Math.PI*2;[[0,ia,'#f97316'],[ia,Math.PI*2,'#3b82f6']].forEach(([s,e,c])=>{ctx.beginPath();ctx.moveTo(50,50);ctx.arc(50,50,45,s-Math.PI/2,e-Math.PI/2);ctx.closePath();ctx.fillStyle=c;ctx.fill();});ctx.beginPath();ctx.arc(50,50,28,0,Math.PI*2);ctx.fillStyle='#10131a';ctx.fill();ctx.fillStyle='#e8eaf0';ctx.font='bold 14px IBM Plex Mono';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(total,50,50);}
+  document.getElementById('donutLegend').innerHTML=`<div class="legend-item"><div class="legend-dot" style="background:#f97316"></div>India: ${india} (${total?Math.round(india/total*100):0}%)</div><div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>USA: ${usa} (${total?Math.round(usa/total*100):0}%)</div>`;
+  // Customer bars
+  const custU={};d.forEach(r=>{if(!r.customer)return;custU[r.customer]=(custU[r.customer]||0)+(parseInt(r.qtyCompleted)||0);});
+  const custS=Object.entries(custU).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const maxC=Math.max(...custS.map(([,v])=>v),1);
+  document.getElementById('custBarChart').innerHTML=custS.length?custS.map(([name,val])=>`<div class="cust-row"><span class="cust-name" title="${name}">${name}</span><div class="cust-bar-bg"><div class="cust-bar-fill" style="width:${Math.round(val/maxC*100)}%"></div></div><span class="cust-val">${val}</span></div>`).join(''):'<div class="empty" style="padding:20px">No data</div>';
+  // Trend
+  const trend={};
+  for(let i=13;i>=0;i--){const dt=new Date();dt.setDate(dt.getDate()-i);trend[dt.toISOString().slice(0,10)]=0;}
+  allData.forEach(r=>{if(trend[r.date]!==undefined&&(!overviewCustomerFilter||r.customer===overviewCustomerFilter))trend[r.date]+=(parseInt(r.qtyCompleted)||0);});
+  const tMax=Math.max(...Object.values(trend),1);
+  document.getElementById('trendChart').innerHTML=Object.entries(trend).map(([date,val])=>{const h=Math.max(3,Math.round((val/tMax)*68));return`<div class="trend-bar-wrap"><div class="trend-val">${val||''}</div><div class="trend-bar" style="height:${h}px" title="${date}: ${val}"></div><div class="trend-label">${date.slice(5)}</div></div>`;}).join('');
+}
+
+// ══════════════════════════════════════════
+//  STATS
+// ══════════════════════════════════════════
+function statCalc(data){return{units:data.reduce((a,r)=>a+(parseInt(r.qtyCompleted)||0),0),hours:data.reduce((a,r)=>a+(parseFloat(r.hoursWorked)||0),0),defects:data.reduce((a,r)=>a+(parseInt(r.defectCount)||0),0),overtime:data.reduce((a,r)=>a+(parseFloat(r.overtimeHrs)||0),0),completed:data.filter(r=>r.jobStatus==='Completed'||r.jobStatus==='Shipped').length,logs:data.length};}
+function setDelta(id,curr,prev,unit,lowerIsBetter=false){
+  const el=document.getElementById(id);if(!el)return;
+  if(prev===0){el.textContent='—';return;}
+  const diff=curr-prev,pct=Math.abs(Math.round((diff/prev)*100)),up=diff>=0,good=lowerIsBetter?!up:up;
+  el.className='kpi-delta '+(good?'up':'down');
+  el.textContent=(up?'▲':'▼')+' '+pct+'% vs prev ('+(up?'+':'')+diff+' '+unit+')';
+}
+
+function renderStats(){
+  const custF=document.getElementById('statsCustomerFilter').value;
+  const teamF=document.getElementById('statsTeamFilter').value;
+  const base=allData.filter(r=>(!custF||r.customer===custF)&&(!teamF||r.team===teamF));
+  const pad=n=>String(n).padStart(2,'0');
+  // Use LOCAL date to avoid UTC-shift issues (toISOString gives previous day in UTC+5:30 etc.)
+  const localISO=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+  const localYM=d=>d.getFullYear()+'-'+pad(d.getMonth()+1);
+
+  // Weekly
+  const{from:wFrom,to:wTo}=getDateRange('week');
+  const pw=new Date(wFrom);pw.setDate(pw.getDate()-1);
+  const pwf=new Date(pw);pwf.setDate(pw.getDate()-6);
+  const tw=base.filter(r=>{const rd=normaliseDate(r.date);return rd>=wFrom&&rd<=wTo;});
+  const lw=base.filter(r=>{const rd=normaliseDate(r.date);return rd>=localISO(pwf)&&rd<=localISO(pw);});
+  const wS=statCalc(tw),lwS=statCalc(lw);
+  document.getElementById('wk-units').textContent=wS.units;
+  document.getElementById('wk-hours').textContent=wS.hours.toFixed(1);
+  document.getElementById('wk-completed').textContent=wS.completed;
+  document.getElementById('wk-defects').textContent=wS.defects;
+  setDelta('wk-units-delta',wS.units,lwS.units,'units');
+  setDelta('wk-hours-delta',wS.hours,lwS.hours,'hrs');
+  setDelta('wk-completed-delta',wS.completed,lwS.completed,'jobs');
+  setDelta('wk-defects-delta',wS.defects,lwS.defects,'',true);
+
+  // Week compare chart
+  const days=[];
+  for(let i=6;i>=0;i--){
+    const dt=new Date();dt.setDate(dt.getDate()-i);
+    const ds=localISO(dt);
+    const pd=new Date(dt);pd.setDate(pd.getDate()-7);
+    const pds=localISO(pd);
+    const u=base.filter(r=>normaliseDate(r.date)===ds).reduce((a,r)=>a+(parseInt(r.qtyCompleted)||0),0);
+    const pu=base.filter(r=>normaliseDate(r.date)===pds).reduce((a,r)=>a+(parseInt(r.qtyCompleted)||0),0);
+    days.push({ds,u,pds,pu,label:['Su','Mo','Tu','We','Th','Fr','Sa'][dt.getDay()]});
+  }
+  const maxW=Math.max(...days.map(d=>d.u),...days.map(d=>d.pu),1);
+  document.getElementById('weekCompareChart').innerHTML=days.map(d=>{
+    const h1=Math.max(3,Math.round((d.u/maxW)*100)),h2=Math.max(3,Math.round((d.pu/maxW)*100));
+    return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px"><div style="display:flex;gap:2px;align-items:flex-end"><div style="width:16px;height:${h1}px;background:var(--accent);border-radius:3px 3px 0 0;opacity:0.9" title="This: ${d.u}"></div><div style="width:16px;height:${h2}px;background:var(--border2);border-radius:3px 3px 0 0" title="Last: ${d.pu}"></div></div><div style="font-family:'IBM Plex Mono';font-size:9px;color:var(--muted)">${d.label}</div></div>`;
+  }).join('')+`<div style="width:100%;display:flex;gap:14px;align-items:center;font-family:'IBM Plex Mono';font-size:9px;color:var(--muted);padding-top:8px;margin-top:8px;border-top:1px solid var(--border)"><span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:7px;background:var(--accent);border-radius:2px;display:inline-block"></span>This week</span><span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:7px;background:var(--border2);border-radius:2px;display:inline-block"></span>Last week</span></div>`;
+
+  // Week day table
+  document.getElementById('weekTableBody').innerHTML=days.map(d=>{
+    const dd=base.filter(r=>normaliseDate(r.date)===d.ds);
+    const opC={};dd.forEach(r=>{if(r.operations)r.operations.split(',').forEach(op=>{const k=op.trim();opC[k]=(opC[k]||0)+1;});});
+    const topOp=Object.entries(opC).sort((a,b)=>b[1]-a[1])[0];
+    const iu=dd.filter(r=>r.team==='India').reduce((a,r)=>a+(parseInt(r.qtyCompleted)||0),0);
+    const uu=dd.filter(r=>r.team==='USA').reduce((a,r)=>a+(parseInt(r.qtyCompleted)||0),0);
+    return`<tr><td style="font-family:'IBM Plex Mono';font-weight:600">${d.label}</td><td style="font-family:'IBM Plex Mono';font-size:11px">${d.ds}</td><td>${dd.length}</td><td style="color:var(--green);font-weight:600">${d.u}</td><td>${dd.reduce((a,r)=>a+(parseFloat(r.hoursWorked)||0),0).toFixed(1)}</td><td style="color:${dd.reduce((a,r)=>a+(parseInt(r.defectCount)||0),0)>0?'var(--red)':'var(--muted)'}">${dd.reduce((a,r)=>a+(parseInt(r.defectCount)||0),0)}</td><td style="color:#f97316">${iu}</td><td style="color:var(--accent2)">${uu}</td><td style="font-size:11px">${topOp?topOp[0]:'—'}</td></tr>`;
+  }).join('');
+
+  // Monthly
+  const{from:mFrom,to:mTo}=getDateRange('month');
+  const pmf=new Date(mFrom);pmf.setMonth(pmf.getMonth()-1);
+  const pmt=new Date(mFrom);pmt.setDate(pmt.getDate()-1);
+  const tm=base.filter(r=>{const rd=normaliseDate(r.date);return rd>=mFrom&&rd<=mTo;});
+  const lmf=localISO(pmf),lmt=localISO(pmt);
+  const mS=statCalc(tm);
+  document.getElementById('mo-units').textContent=mS.units;
+  document.getElementById('mo-hours').textContent=mS.hours.toFixed(1);
+  document.getElementById('mo-completed').textContent=mS.completed;
+  document.getElementById('mo-overtime').textContent=mS.overtime.toFixed(1);
+  document.getElementById('mo-defect-rate').textContent=mS.units>0?((mS.defects/mS.units)*100).toFixed(1)+'%':'0%';
+  setDelta('mo-units-delta',mS.units,statCalc(base.filter(r=>{const rd=normaliseDate(r.date);return rd>=lmf&&rd<=lmt;})).units,'units vs last mo.');
+
+  // 6 month bars — use local month strings
+  const mData=[];
+  for(let m=5;m>=0;m--){
+    const dt=new Date();dt.setDate(1);dt.setMonth(dt.getMonth()-m);
+    const ym=localYM(dt);
+    const units=base.filter(r=>normaliseDate(r.date).startsWith(ym)).reduce((a,r)=>a+(parseInt(r.qtyCompleted)||0),0);
+    mData.push({ym,label:dt.toLocaleString('default',{month:'short'}),units,isCurrent:m===0});
+  }
+  const maxM=Math.max(...mData.map(d=>d.units),1);
+  document.getElementById('monthlyBars').innerHTML=mData.map(d=>`<div class="month-bar-wrap"><div class="month-bar-val">${d.units}</div><div class="month-bar${d.isCurrent?' current':''}" style="height:${Math.max(3,Math.round((d.units/maxM)*100))}px" title="${d.label}: ${d.units}"></div></div>`).join('');
+  document.getElementById('monthlyBarLabels').innerHTML=mData.map(d=>`<div class="month-bar-wrap"><div class="month-bar-label" style="color:${d.isCurrent?'var(--orange)':'var(--muted)'}">${d.label}</div></div>`).join('');
+
+  // Monthly summary table
+  document.getElementById('monthTableBody').innerHTML=[...mData].reverse().map(d=>{
+    const md=base.filter(r=>normaliseDate(r.date).startsWith(d.ym));const ms=statCalc(md);
+    const cc={};md.forEach(r=>{if(r.customer)cc[r.customer]=(cc[r.customer]||0)+(parseInt(r.qtyCompleted)||0);});
+    const tc=Object.entries(cc).sort((a,b)=>b[1]-a[1])[0];
+    const rate=ms.units>0?((ms.defects/ms.units)*100).toFixed(1)+'%':'0.0%';
+    return`<tr><td style="font-family:'IBM Plex Mono';font-weight:600;color:${d.isCurrent?'var(--orange)':'var(--text)'}">${d.ym}</td><td>${md.length}</td><td style="color:var(--green);font-weight:600">${ms.units}</td><td>${ms.hours.toFixed(1)}</td><td style="color:var(--purple)">${ms.overtime.toFixed(1)}</td><td style="color:${ms.defects>0?'var(--red)':'var(--muted)'}">${ms.defects}</td><td style="color:${parseFloat(rate)>2?'var(--red)':parseFloat(rate)>0?'var(--orange)':'var(--green)'}">${rate}</td><td style="color:var(--green)">${ms.completed}</td><td style="font-size:11px">${tc?tc[0]:'—'}</td></tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+//  LOGS TABLE
+// ══════════════════════════════════════════
+function applyFilters(){
+  const team=document.getElementById('fTeam').value;
+  const cust=document.getElementById('fCustomer').value;
+  const status=document.getElementById('fStatus').value;
+  const op=document.getElementById('fOp').value;
+  const worker=document.getElementById('fWorker').value;
+  const df=document.getElementById('fDateFrom').value;
+  const dt=document.getElementById('fDateTo').value;
+  filteredData=allData.filter(r=>(!team||r.team===team)&&(!cust||r.customer===cust)&&(!status||r.jobStatus===status)&&(!op||!(r.operations||'').includes?!(r.operations||'').includes(op):!(r.operations||'').split(',').some(x=>x.trim()===op))&&(!worker||r.workerName===worker)&&(!df||r.date>=df)&&(!dt||r.date<=dt));
+  // Fix op filter
+  filteredData=allData.filter(r=>{
+    if(team&&r.team!==team)return false;
+    if(cust&&r.customer!==cust)return false;
+    if(status&&r.jobStatus!==status)return false;
+    if(op&&!(r.operations||'').includes(op))return false;
+    if(worker&&r.workerName!==worker)return false;
+    if(df&&r.date<df)return false;
+    if(dt&&r.date>dt)return false;
+    return true;
+  });
+  renderLogsTable(filteredData);
+}
+function clearFilters(){['fTeam','fCustomer','fStatus','fOp','fWorker'].forEach(id=>document.getElementById(id).value='');['fDateFrom','fDateTo'].forEach(id=>document.getElementById(id).value='');filteredData=[];renderLogsTable(allData);}
+function renderLogsTable(data){
+  document.getElementById('logCount').textContent=data.length+' records';
+  const tbody=document.getElementById('logsTableBody');
+  if(!data.length){tbody.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">🔍</div>No matching records</div></td></tr>';return;}
+  const sorted=[...data].sort((a,b)=>{const av=a[sortKey]||'',bv=b[sortKey]||'';return typeof av==='number'?(av-bv)*sortDir:av.localeCompare(bv)*sortDir;});
+  tbody.innerHTML=sorted.map(r=>`<tr>
+    <td style="font-family:'IBM Plex Mono';font-size:10px">${r.date}</td>
+    <td><strong>${r.workerName}</strong><br><span style="font-family:'IBM Plex Mono';font-size:9px;color:var(--muted)">${r.workerId}</span></td>
+    <td>${teamBadge(r.team)}</td>
+    <td><strong>${r.customer}</strong></td>
+    <td style="font-family:'IBM Plex Mono';font-size:10px">${r.orderNo}</td>
+    <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px" title="${r.operations}">${r.operations}</td>
+    <td style="text-align:center;font-weight:600;color:var(--green)">${r.qtyCompleted}</td>
+    <td style="text-align:center;color:${parseInt(r.defectCount)>0?'var(--red)':'var(--muted)'}">${r.defectCount||0}</td>
+    <td style="font-family:'IBM Plex Mono';font-size:10px">${r.hoursWorked}</td>
+    <td>${statusBadge(r.jobStatus)}</td>
+    <td style="font-size:10px;color:${r.escalation?'var(--orange)':'var(--muted)'};max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.escalation||''}">${r.escalation||'—'}</td>
+  </tr>`).join('');
+}
+function sortTable(key){if(sortKey===key)sortDir*=-1;else{sortKey=key;sortDir=-1;}renderLogsTable(filteredData.length?filteredData:allData);}
+
+// ══════════════════════════════════════════
+//  WORKERS
+// ══════════════════════════════════════════
+function renderWorkers(){
+  const team=document.getElementById('wTeam').value;
+  const custF=document.getElementById('wCustomer').value;
+  const sortBy=document.getElementById('wSort').value;
+  const period=document.getElementById('wPeriod').value;
+  const{from,to}=getDateRange(period==='all'?'all':period);
+  const pd=allData.filter(r=>r.date>=from&&r.date<=to);
+  const wMap={};
+  pd.forEach(r=>{if(team&&r.team!==team)return;const k=r.workerId;if(!wMap[k])wMap[k]={name:r.workerName,id:r.workerId,team:r.team,units:0,hours:0,defects:0,logs:0,statuses:{}};wMap[k].units+=(parseInt(r.qtyCompleted)||0);wMap[k].hours+=(parseFloat(r.hoursWorked)||0);wMap[k].defects+=(parseInt(r.defectCount)||0);wMap[k].logs++;if(r.jobStatus)wMap[k].statuses[r.jobStatus]=(wMap[k].statuses[r.jobStatus]||0)+1;});
+  let workers=Object.values(wMap);
+  workerRegistry.forEach(wr=>{if(team&&wr.team!==team)return;if(!wMap[wr.workerId])workers.push({name:wr.workerName,id:wr.workerId,team:wr.team,units:0,hours:0,defects:0,logs:0,statuses:{}});});
+  if(custF){const wids=new Set(allData.filter(r=>r.customer===custF).map(r=>r.workerId));workers=workers.filter(w=>wids.has(w.id));}
+  if(sortBy==='units')workers.sort((a,b)=>b.units-a.units);else if(sortBy==='hours')workers.sort((a,b)=>b.hours-a.hours);else if(sortBy==='logs')workers.sort((a,b)=>b.logs-a.logs);else workers.sort((a,b)=>a.defects-b.defects);
+  const maxU=Math.max(...workers.map(w=>w.units),1);
+  const grid=document.getElementById('workersGrid');
+  if(!workers.length){grid.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="empty-icon">👷</div>No workers found</div>';return;}
+  grid.innerHTML=workers.map(w=>{
+    const pct=Math.round((w.units/maxU)*100);
+    const reg=workerRegistry.find(r=>r.workerId===w.id);
+    const status=reg?reg.status:'Active';
+    const sc=status==='Active'?'var(--green)':status==='On Leave'?'var(--orange)':'var(--muted)';
+    const emoji=w.team==='India'?'🇮🇳':'🇺🇸';
+    return`<div class="worker-card">
+      <div class="worker-head">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="worker-avatar">${emoji}</div>
+          <div>
+            <div class="worker-name">${w.name}</div>
+            <div class="worker-id">${w.id} · ${w.team}</div>
+            ${reg?`<div style="font-size:9px;color:var(--muted);font-family:'IBM Plex Mono'">${reg.primaryOp||''}</div>`:''}
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
+          <span style="font-family:'IBM Plex Mono';font-size:9px;color:${sc}">● ${status}</span>
+          <div style="display:flex;gap:4px">
+            <button class="btn-icon" onclick='openWorkerModal(${JSON.stringify(w.id)})' title="Edit">✏</button>
+            <button class="btn-icon" style="border-color:rgba(239,68,68,0.3);color:var(--red)" onclick='promptDeleteWorker(${JSON.stringify(w.id)},${JSON.stringify(w.name)})' title="Delete">🗑</button>
+          </div>
+        </div>
+      </div>
+      ${reg?`<div style="font-size:10px;color:var(--muted);margin-bottom:8px;font-family:'IBM Plex Mono'">${reg.customers||'No customers assigned'}</div>`:''}
+      <div style="font-size:9px;color:var(--muted);font-family:'IBM Plex Mono';margin-bottom:2px">PRODUCTIVITY (${period})</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <div style="font-size:9px;color:var(--muted);font-family:'IBM Plex Mono'">${pct}% of top performer</div>
+      <div class="stat-row">
+        <div class="stat-item"><div class="stat-val">${w.units}</div><div class="stat-lbl">UNITS</div></div>
+        <div class="stat-item"><div class="stat-val" style="color:var(--accent2)">${w.hours.toFixed(0)}</div><div class="stat-lbl">HOURS</div></div>
+        <div class="stat-item"><div class="stat-val" style="color:var(--green)">${w.statuses['Completed']||0}</div><div class="stat-lbl">DONE</div></div>
+        <div class="stat-item"><div class="stat-val" style="color:${w.defects>0?'var(--red)':'var(--green)'}">${w.defects}</div><div class="stat-lbl">DEFECTS</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Worker CRUD ────────────────────────────
+function openWorkerModal(workerId){
+  const reg=workerId?workerRegistry.find(r=>r.workerId===workerId):null;
+  document.getElementById('workerModalTitle').textContent=reg?'EDIT WORKER':'ADD WORKER';
+  document.getElementById('mWorkerId').value=reg?reg.workerId:'';
+  document.getElementById('mWorkerId').disabled=!!reg;
+  document.getElementById('mWorkerName').value=reg?reg.workerName:'';
+  document.getElementById('mTeam').value=reg?reg.team:'';
+  document.getElementById('mShift').value=reg?(reg.shift||'Morning'):'Morning';
+  document.getElementById('mSupervisor').value=reg?(reg.supervisor||''):'';
+  document.getElementById('mPrimaryOp').value=reg?(reg.primaryOp||''):'';
+  document.getElementById('mCustomers').value=reg?(reg.customers||''):'';
+  document.getElementById('mNotes').value=reg?(reg.notes||''):'';
+  document.getElementById('mStatus').value=reg?(reg.status||'Active'):'Active';
+  document.getElementById('mJoinDate').value=reg?(reg.joinDate||''):'';
+  document.getElementById('workerModal').classList.add('open');
+}
+function saveWorker(){
+  const id=document.getElementById('mWorkerId').value.trim();
+  const name=document.getElementById('mWorkerName').value.trim();
+  const team=document.getElementById('mTeam').value;
+  if(!id||!name||!team){showToast('Worker ID, Name & Team are required',true);return;}
+  const w={workerId:id,workerName:name,team,shift:document.getElementById('mShift').value,supervisor:document.getElementById('mSupervisor').value,primaryOp:document.getElementById('mPrimaryOp').value,customers:document.getElementById('mCustomers').value,notes:document.getElementById('mNotes').value,status:document.getElementById('mStatus').value,joinDate:document.getElementById('mJoinDate').value};
+  const idx=workerRegistry.findIndex(r=>r.workerId===id);
+  if(idx>=0)workerRegistry[idx]=w;else workerRegistry.push(w);
+  localStorage.setItem('mfgops_workers',JSON.stringify(workerRegistry));
+  closeModal('workerModal');renderWorkers();showToast(idx>=0?'✓ Worker Updated':'✓ Worker Added');
+}
+function promptDeleteWorker(id,name){deletingWorkerId=id;document.getElementById('confirmWorkerName').textContent=name;document.getElementById('confirmModal').classList.add('open');}
+function confirmDeleteWorker(){workerRegistry=workerRegistry.filter(r=>r.workerId!==deletingWorkerId);localStorage.setItem('mfgops_workers',JSON.stringify(workerRegistry));closeModal('confirmModal');renderWorkers();showToast('✓ Worker Removed');}
+
+// ══════════════════════════════════════════
+//  ORDERS
+// ══════════════════════════════════════════
+function renderOrders(){
+  const custF=document.getElementById('ordCustomer').value;
+  const statusF=document.getElementById('ordStatus').value;
+  const search=(document.getElementById('ordSearch').value||'').toLowerCase().trim();
+  const oMap={};
+  allData.forEach(r=>{
+    const k=r.orderNo; if(!k)return;
+    if(custF&&r.customer!==custF)return;
+    if(!oMap[k])oMap[k]={orderNo:r.orderNo,customer:r.customer,partName:r.partName,totalAssigned:0,totalCompleted:0,lastDate:'',lastStatus:'',defects:0,team:r.team,logCount:0,ncm:false};
+    const o=oMap[k];
+    o.totalAssigned=Math.max(o.totalAssigned,parseInt(r.qtyAssigned)||0);
+    o.totalCompleted+=(parseInt(r.qtyCompleted)||0);
+    o.defects+=(parseInt(r.defectCount)||0);
+    o.logCount++;
+    if((r.operations||'').includes('NCM'))o.ncm=true;
+    if(r.date>o.lastDate){o.lastDate=r.date;o.lastStatus=r.jobStatus;}
+  });
+  let orders=Object.values(oMap);
+  if(statusF)orders=orders.filter(o=>o.lastStatus===statusF);
+  if(search)orders=orders.filter(o=>o.orderNo.toLowerCase().includes(search)||o.customer.toLowerCase().includes(search)||(o.partName||'').toLowerCase().includes(search));
+  orders.sort((a,b)=>b.lastDate.localeCompare(a.lastDate));
+  document.getElementById('orderCount').textContent=orders.length+' orders';
+  const tbody=document.getElementById('ordersTableBody');
+  if(!orders.length){tbody.innerHTML='<tr><td colspan="11"><div class="empty"><div class="empty-icon">📋</div>No orders found</div></td></tr>';return;}
+  tbody.innerHTML=orders.map(o=>{
+    const pct=o.totalAssigned>0?Math.min(100,Math.round((o.totalCompleted/o.totalAssigned)*100)):0;
+    const bc=pct>=100?'var(--green)':pct>50?'var(--accent)':'var(--orange)';
+    return`<tr>
+      <td style="font-family:'IBM Plex Mono';font-size:11px"><strong style="cursor:pointer;color:var(--accent);text-decoration:underline dotted" onclick='openOrderDetail("${o.orderNo}")'>${o.orderNo}</strong>${o.ncm?'<span title="NCM Raised" style="margin-left:5px;font-size:10px">⚠️</span>':''}</td>
+      <td><strong>${o.customer}</strong></td>
+      <td style="font-size:11px">${o.partName||'—'}</td>
+      <td style="text-align:center">${o.totalAssigned}</td>
+      <td style="text-align:center;color:var(--green);font-weight:600">${Math.min(o.totalCompleted,o.totalAssigned)}</td>
+      <td style="min-width:110px"><div style="display:flex;align-items:center;gap:7px"><div class="progress-bar" style="flex:1;margin:0"><div class="progress-fill" style="width:${pct}%;background:${bc}"></div></div><span style="font-family:'IBM Plex Mono';font-size:10px;color:${bc}">${pct}%</span></div></td>
+      <td style="text-align:center;font-family:'IBM Plex Mono';font-size:11px">${o.logCount}</td>
+      <td style="font-family:'IBM Plex Mono';font-size:10px">${o.lastDate}</td>
+      <td>${statusBadge(o.lastStatus)}</td>
+      <td style="text-align:center;color:${o.defects>0?'var(--red)':'var(--muted)'}">${o.defects}</td>
+      <td><button class="btn-small" onclick='openOrderDetail("${o.orderNo}")' style="font-size:9px;padding:4px 10px;white-space:nowrap">&#128269; ACTIVITY</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+//  ORDER DETAIL MODAL
+// ══════════════════════════════════════════
+let currentOrderData = [];
+let currentOrderNo = '';
+
+function openOrderDetail(orderNo) {
+  currentOrderNo = orderNo;
+  const orderLogs = allData.filter(r => r.orderNo === orderNo);
+  currentOrderData = [...orderLogs].sort((a,b) => a.date.localeCompare(b.date));
+
+  if (!currentOrderData.length) { showToast('No activity found for ' + orderNo, true); return; }
+
+  const o = currentOrderData[currentOrderData.length - 1];
+  const firstLog = currentOrderData[0];
+
+  document.getElementById('odTitle').textContent = orderNo;
+  document.getElementById('odStatusBadge').innerHTML = statusBadge(o.jobStatus || currentOrderData.map(r=>r.jobStatus).filter(Boolean).pop());
+
+  // Subtitle
+  const uniqueWorkers = [...new Set(currentOrderData.map(r => r.workerName))];
+  document.getElementById('odSubtitle').textContent =
+    [o.customer, o.partName, 'First activity: ' + firstLog.date, 'Last activity: ' + o.date, uniqueWorkers.length + ' worker(s)'].filter(Boolean).join(' · ');
+
+  // KPI strip
+  const totalUnits = currentOrderData.reduce((a,r)=>a+(parseInt(r.qtyCompleted)||0),0);
+  const totalAssigned = Math.max(...currentOrderData.map(r=>parseInt(r.qtyAssigned)||0), 0);
+  const totalHours = currentOrderData.reduce((a,r)=>a+(parseFloat(r.hoursWorked)||0),0);
+  const totalDefects = currentOrderData.reduce((a,r)=>a+(parseInt(r.defectCount)||0),0);
+  const pct = totalAssigned > 0 ? Math.min(100, Math.round((totalUnits/totalAssigned)*100)) : 0;
+  const ncmLogs = currentOrderData.filter(r=>(r.operations||'').includes('NCM'));
+  const escLogs = currentOrderData.filter(r=>r.escalation && r.escalation.trim());
+  document.getElementById('odKpiStrip').innerHTML = `
+    <div class="od-kpi"><div class="od-kpi-val" style="color:var(--accent)">${totalUnits}<span style="font-size:14px;color:var(--muted)">/${totalAssigned}</span></div><div class="od-kpi-lbl">Units Done</div></div>
+    <div class="od-kpi"><div class="od-kpi-val" style="color:var(--green)">${pct}%</div><div class="od-kpi-lbl">Complete</div></div>
+    <div class="od-kpi"><div class="od-kpi-val" style="color:var(--accent2)">${totalHours.toFixed(1)}</div><div class="od-kpi-lbl">Labor Hrs</div></div>
+    <div class="od-kpi"><div class="od-kpi-val" style="color:${totalDefects>0?'var(--red)':'var(--green)'}">${totalDefects}</div><div class="od-kpi-lbl">Defects</div></div>
+    <div class="od-kpi"><div class="od-kpi-val" style="color:${ncmLogs.length>0?'var(--red)':'var(--muted)'}">${ncmLogs.length}</div><div class="od-kpi-lbl">NCM Entries</div></div>
+    <div class="od-kpi"><div class="od-kpi-val" style="color:${escLogs.length>0?'var(--orange)':'var(--muted)'}">${currentOrderData.length}</div><div class="od-kpi-lbl">Log Entries</div></div>`;
+
+  // Operations flow bar — all unique ops found in logs
+  const allOps = {};
+  const OP_ORDER = ['RFQ Handling','Cutting','Bending','Punching','Forming','Welding','Quality Check','Assembly','Finishing','Shipping Prep','Shipping','Shipping Monitor','NCM Handling'];
+  currentOrderData.forEach(r => {
+    if (r.operations) r.operations.split(',').forEach(op => {
+      const k = op.trim(); if (k) allOps[k] = (allOps[k]||0) + 1;
+    });
+  });
+  const sortedOps = OP_ORDER.filter(op => allOps[op]).concat(Object.keys(allOps).filter(k => !OP_ORDER.includes(k)));
+  document.getElementById('odOpsFlow').innerHTML = '<div class="ops-flow">' +
+    sortedOps.map(op => {
+      const isNcm = op === 'NCM Handling';
+      return `<span class="op-pill ${isNcm ? 'ncm' : 'done'}">${isNcm ? '⚠️' : '✓'} ${op} <span style="opacity:0.6">(${allOps[op]}x)</span></span>`;
+    }).join('') + '</div>';
+
+  // Alert banners
+  const ncmAlert = document.getElementById('odNcmAlert');
+  if (ncmLogs.length > 0) {
+    ncmAlert.style.display = 'block';
+    ncmAlert.innerHTML = '⚠ NCM RAISED: ' + ncmLogs.map(r => r.date + ' by ' + r.workerName + (r.ncmType ? ' [' + r.ncmType + ']' : '')).join(' · ');
+  } else { ncmAlert.style.display = 'none'; }
+
+  const escAlert = document.getElementById('odEscAlert');
+  if (escLogs.length > 0) {
+    escAlert.style.display = 'block';
+    escAlert.innerHTML = '🚨 ESCALATIONS: ' + escLogs.map(r => r.date + ' — ' + r.escalation).join(' · ');
+  } else { escAlert.style.display = 'none'; }
+
+  // Populate worker filter
+  const workerSel = document.getElementById('odWorkerFilter');
+  const uWorkers = [...new Set(currentOrderData.map(r => r.workerName))].sort();
+  workerSel.innerHTML = '<option value="">All Workers</option>' + uWorkers.map(w => `<option>${w}</option>`).join('');
+
+  // Reset filters
+  document.getElementById('odTeamFilter').value = '';
+  document.getElementById('odWorkerFilter').value = '';
+
+  // Worker contribution cards
+  const wMap = {};
+  currentOrderData.forEach(r => {
+    if (!wMap[r.workerId]) wMap[r.workerId] = {name:r.workerName,id:r.workerId,team:r.team,units:0,hours:0,logs:0};
+    wMap[r.workerId].units += (parseInt(r.qtyCompleted)||0);
+    wMap[r.workerId].hours += (parseFloat(r.hoursWorked)||0);
+    wMap[r.workerId].logs++;
+  });
+  const wList = Object.values(wMap).sort((a,b) => b.units - a.units);
+  document.getElementById('odWorkerContrib').innerHTML = wList.map(w =>
+    `<div class="wc-card">
+      <div style="font-size:16px;margin-bottom:4px">${w.team==='India'?'🇮🇳':'🇺🇸'}</div>
+      <div class="wc-name" title="${w.name}">${w.name}</div>
+      <div class="wc-id">${w.id}</div>
+      <div class="wc-stats">
+        <div><div class="wc-stat-val">${w.units}</div><div class="wc-stat-lbl">UNITS</div></div>
+        <div><div class="wc-stat-val" style="color:var(--accent2)">${w.hours.toFixed(0)}</div><div class="wc-stat-lbl">HRS</div></div>
+        <div><div class="wc-stat-val" style="color:var(--muted)">${w.logs}</div><div class="wc-stat-lbl">LOGS</div></div>
+      </div>
+    </div>`
+  ).join('');
+
+  renderOrderDetailTable(currentOrderData);
+  document.getElementById('orderDetailModal').classList.add('open');
+}
+
+function filterOrderDetail() {
+  const team = document.getElementById('odTeamFilter').value;
+  const worker = document.getElementById('odWorkerFilter').value;
+  const filtered = currentOrderData.filter(r =>
+    (!team || r.team === team) && (!worker || r.workerName === worker)
+  );
+  renderOrderDetailTable(filtered);
+}
+
+function renderOrderDetailTable(data) {
+  const tbody = document.getElementById('odTableBody');
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="11"><div class="empty" style="padding:30px"><div class="empty-icon" style="font-size:24px">🔍</div>No entries match filter</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(r => {
+    const hasNcm = (r.operations||'').includes('NCM');
+    return `<tr style="${hasNcm ? 'background:rgba(239,68,68,0.03)' : ''}">
+      <td style="font-family:'IBM Plex Mono';font-size:10px;white-space:nowrap">${r.date}</td>
+      <td><strong style="font-size:12px">${r.workerName}</strong><br><span style="font-family:'IBM Plex Mono';font-size:9px;color:var(--muted)">${r.workerId}</span></td>
+      <td>${teamBadge(r.team)}</td>
+      <td style="font-size:11px;max-width:160px">${(r.operations||'—').split(',').map(op=>{const t=op.trim();return t.includes('NCM')?`<span style="color:var(--red);font-weight:600">${t}</span>`:t;}).join(', ')}</td>
+      <td style="text-align:center;font-weight:600;color:var(--green)">${r.qtyCompleted||0}</td>
+      <td style="text-align:center;color:${parseInt(r.defectCount)>0?'var(--red)':'var(--muted)'}">${r.defectCount||0}</td>
+      <td style="font-family:'IBM Plex Mono';font-size:10px">${r.hoursWorked||'—'}</td>
+      <td>${statusBadge(r.jobStatus)}</td>
+      <td style="font-size:10px;max-width:100px">
+        ${hasNcm ? `<div style="color:var(--red);font-family:'IBM Plex Mono';font-size:9px">${r.ncmRef||'—'}<br>${r.ncmType||''}<br>${r.ncmDisposition||''}</div>` : '<span style="color:var(--muted)">—</span>'}
+      </td>
+      <td style="font-size:11px;max-width:100px;color:${r.escalation?'var(--orange)':'var(--muted)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.escalation||''}">${r.escalation||'—'}</td>
+      <td style="font-size:11px;max-width:120px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.workNotes||''}">${r.workNotes||'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function exportOrderCSV() {
+  if (!currentOrderData.length) return;
+  const keys = Object.keys(currentOrderData[0]);
+  const csv = [keys.join(','), ...currentOrderData.map(r => keys.map(k => `"${(r[k]||'').toString().replace(/"/g,'""')}"`).join(','))].join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'order_activity_' + currentOrderNo + '_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+
+// ══════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════
+function showPage(id,btn){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));document.getElementById('page-'+id).classList.add('active');if(btn)btn.classList.add('active');if(id==='workers')renderWorkers();if(id==='orders')renderOrders();if(id==='stats')renderStats();if(id==='backup')loadArchiveList();}
+
+// ══════════════════════════════════════════
+//  BACKUP / ARCHIVE
+// ══════════════════════════════════════════
+async function runBackupPreview(){
+  if(!SCRIPT_URL){showToast('Connect Google Sheets first',true);return;}
+  const months=document.getElementById('archiveMonths').value;
+  const type=document.getElementById('archiveType').value;
+  const card=document.getElementById('backupPreviewCard');
+  const content=document.getElementById('backupPreviewContent');
+  card.style.display='block';
+  content.innerHTML='<div style="font-family:\'IBM Plex Mono\';font-size:11px;color:var(--muted);">⏳ Analysing data...</div>';
+  document.getElementById('backupActionRow').style.display='none';
+  try{
+    const data=await gasFetch('getBackupPreview',{months,type});
+    if(data.error){content.innerHTML=`<div style="color:var(--red);font-family:'IBM Plex Mono';font-size:11px;">⚠ ${data.error}</div>`;return;}
+    let html=`<div style="font-family:'IBM Plex Mono';font-size:10px;color:var(--muted);margin-bottom:12px;">Cutoff date: <strong style="color:var(--accent)">${data.cutoffDate}</strong> (${data.months} months ago)</div>`;
+    let hasAnything=false;
+    if(data.preview&&data.preview.logs){
+      const l=data.preview.logs;
+      html+=`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px;">
+        <div style="font-family:'IBM Plex Mono';font-size:10px;color:var(--orange);letter-spacing:2px;margin-bottom:10px;">WORK LOGS</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+          <div><div style="font-family:'IBM Plex Mono';font-size:9px;color:var(--muted)">TOTAL ROWS</div><div style="font-family:'Bebas Neue';font-size:28px;color:var(--text)">${l.totalRows}</div></div>
+          <div><div style="font-family:'IBM Plex Mono';font-size:9px;color:var(--muted)">WILL ARCHIVE</div><div style="font-family:'Bebas Neue';font-size:28px;color:var(--red)">${l.toArchive}</div></div>
+          <div><div style="font-family:'IBM Plex Mono';font-size:9px;color:var(--muted)">WILL REMAIN</div><div style="font-family:'Bebas Neue';font-size:28px;color:var(--green)">${l.remaining}</div></div>
+        </div>
+        ${l.toArchive>0?`<div style="font-size:11px;color:var(--muted);margin-top:10px;font-family:'IBM Plex Mono'">By year: ${Object.entries(l.byYear).map(([y,c])=>`<span style="margin-right:10px;color:var(--label)"><strong>${y}</strong>: ${c} rows</span>`).join('')}</div>`:'<div style="font-size:11px;color:var(--green);margin-top:8px;font-family:\'IBM Plex Mono\'">✓ Nothing to archive</div>'}
+      </div>`;
+      if(l.toArchive>0)hasAnything=true;
+    }
+    if(data.preview&&data.preview.pos){
+      const p=data.preview.pos;
+      html+=`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px;">
+        <div style="font-family:'IBM Plex Mono';font-size:10px;color:var(--accent2);letter-spacing:2px;margin-bottom:10px;">PURCHASE ORDERS (Completed/Shipped/Cancelled)</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+          <div><div style="font-family:'IBM Plex Mono';font-size:9px;color:var(--muted)">TOTAL POs</div><div style="font-family:'Bebas Neue';font-size:28px;color:var(--text)">${p.totalRows}</div></div>
+          <div><div style="font-family:'IBM Plex Mono';font-size:9px;color:var(--muted)">WILL ARCHIVE</div><div style="font-family:'Bebas Neue';font-size:28px;color:var(--red)">${p.toArchive}</div></div>
+          <div><div style="font-family:'IBM Plex Mono';font-size:9px;color:var(--muted)">WILL REMAIN</div><div style="font-family:'Bebas Neue';font-size:28px;color:var(--green)">${p.remaining}</div></div>
+        </div>
+        ${p.toArchive>0?`<div style="font-size:11px;color:var(--muted);margin-top:10px;font-family:'IBM Plex Mono'">By year: ${Object.entries(p.byYear).map(([y,c])=>`<span style="margin-right:10px;color:var(--label)"><strong>${y}</strong>: ${c} rows</span>`).join('')}</div>`:'<div style="font-size:11px;color:var(--green);margin-top:8px;font-family:\'IBM Plex Mono\'">✓ Nothing to archive</div>'}
+      </div>`;
+      if(p.toArchive>0)hasAnything=true;
+    }
+    content.innerHTML=html;
+    if(hasAnything){
+      const row=document.getElementById('backupActionRow');
+      row.style.display='flex';
+      const t=document.getElementById('archiveType').value;
+      document.getElementById('archiveLogsBtn').style.display=(t==='logs'||t==='both')?'':'none';
+      document.getElementById('archivePOsBtn').style.display=(t==='pos'||t==='both')?'':'none';
+      document.getElementById('archiveBothBtn').style.display=t==='both'?'':'none';
+      document.getElementById('archiveLogsBtn').style.display=t==='logs'?'':'none';
+      document.getElementById('archivePOsBtn').style.display=t==='pos'?'':'none';
+      if(t==='both'){document.getElementById('archiveBothBtn').style.display='';}
+    }
+  }catch(e){content.innerHTML=`<div style="color:var(--red);font-family:'IBM Plex Mono';font-size:11px;">⚠ ${e.message}</div>`;}
+}
+
+async function doArchive(type){
+  if(!SCRIPT_URL){showToast('Connect Google Sheets first',true);return;}
+  const months=document.getElementById('archiveMonths').value;
+  if(!confirm(`Archive ${type==='both'?'Work Logs + POs':type==='logs'?'Work Logs':'POs'} older than ${months} months?\n\nThis will DELETE old rows from live sheets after copying them to archive sheets.\n\nThis action cannot be undone.`))return;
+  const st=document.getElementById('archiveStatus');
+  st.textContent='Archiving...';
+  st.style.color='var(--accent)';
+  try{
+    const actions=type==='both'?['logs','pos']:[type];
+    const results=[];
+    for(const a of actions){
+      const res=await gasPost(a==='logs'?'archiveLogs':'archivePOs',{months});
+      results.push({type:a,res});
+    }
+    const msgs=results.map(r=>r.res&&r.res.message?r.res.message:JSON.stringify(r.res)).join(' | ');
+    st.textContent='✓ Done: '+msgs;
+    st.style.color='var(--green)';
+    loadData();
+    loadArchiveList();
+    setTimeout(()=>runBackupPreview(),1500);
+  }catch(e){
+    st.textContent='⚠ '+e.message;
+    st.style.color='var(--red)';
+  }
+}
+
+async function loadArchiveList(){
+  if(!SCRIPT_URL){document.getElementById('archiveListContent').textContent='Connect Google Sheets first.';return;}
+  document.getElementById('archiveListContent').textContent='Loading...';
+  try{
+    const data=await gasFetch('getArchiveList',{});
+    if(!data.archives||!data.archives.length){
+      document.getElementById('archiveListContent').innerHTML='<span style="color:var(--muted)">No archive sheets found yet.</span>';
+      return;
+    }
+    document.getElementById('archiveListContent').innerHTML=`
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;">
+        ${data.archives.map(a=>`
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+            <div style="font-family:'IBM Plex Mono';font-size:10px;color:${a.type==='logs'?'var(--orange)':'var(--accent2)'};letter-spacing:1px;margin-bottom:4px;">${a.type==='logs'?'WORK LOGS':'POs'} · ${a.year}</div>
+            <div style="font-family:'Bebas Neue';font-size:26px;color:var(--text)">${a.rows}</div>
+            <div style="font-family:'IBM Plex Mono';font-size:9px;color:var(--muted)">archived rows</div>
+            <div style="font-family:'IBM Plex Mono';font-size:9px;color:var(--muted);margin-top:4px;">${a.name}</div>
+          </div>`).join('')}
+      </div>`;
+  }catch(e){document.getElementById('archiveListContent').innerHTML=`<span style="color:var(--red)">⚠ ${e.message}</span>`;}
+}
+function statusBadge(s){const m={'Completed':'badge-green','Shipped':'badge-green','In Progress':'badge-yellow','Awaiting Material':'badge-blue','On Hold':'badge-red','QC Failed':'badge-red','NCM Raised':'badge-red'};return`<span class="badge ${m[s]||'badge-yellow'}">${s||'—'}</span>`;}
+function teamBadge(t){return t==='India'?'<span class="team-india">🇮🇳 India</span>':'<span class="team-usa">🇺🇸 USA</span>';}
+function showToast(msg,isError=false){const t=document.getElementById('toast');t.textContent=msg;t.className=isError?'error show':'show';setTimeout(()=>t.className=isError?'error':'',3000);}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function exportCSV(){const data=filteredData.length?filteredData:allData;if(!data.length)return;const keys=Object.keys(data[0]);const csv=[keys.join(','),...data.map(r=>keys.map(k=>`"${(r[k]||'').toString().replace(/"/g,'""')}"`)
+.join(','))].join('\n');const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='mfgops_'+new Date().toISOString().slice(0,10)+'.csv';a.click();}
+document.querySelectorAll('.modal-overlay').forEach(o=>{o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});});
+</script>
+</body>
+</html>

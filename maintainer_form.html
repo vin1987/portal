@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MFG OPS — Maintainer</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0f14;--surface:#161920;--surface2:#1e222c;--surface3:#252a38;
+  --border:#2a2f3d;--border2:#343b52;
+  --accent:#f0c040;--accent2:#3b82f6;--accent3:#a855f7;
+  --green:#22c55e;--red:#ef4444;--orange:#f97316;
+  --text:#e8eaf0;--muted:#6b7280;--label:#9ca3af;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;min-height:100vh;padding-bottom:80px;}
+
+/* ── HEADER ── */
+.header{background:var(--surface);border-bottom:2px solid var(--accent);padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.logo{font-family:'Bebas Neue';font-size:26px;letter-spacing:4px;color:var(--accent);}
+.logo span{color:var(--text);}
+.header-right{font-family:'IBM Plex Mono';font-size:12px;color:var(--muted);}
+#live-clock{color:var(--accent);}
+
+/* ── TABS ── */
+.tab-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;display:flex;gap:4px;overflow-x:auto;}
+.tab{padding:12px 20px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:'IBM Plex Mono';font-size:11px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab .tab-icon{margin-right:6px;}
+
+/* ── LAYOUT ── */
+.container{max-width:860px;margin:32px auto;padding:0 20px;}
+.page{display:none;}.page.active{display:block;}
+.page-title{font-family:'Bebas Neue';font-size:38px;letter-spacing:3px;line-height:1;margin-bottom:4px;}
+.page-sub{font-size:12px;color:var(--muted);font-family:'IBM Plex Mono';margin-bottom:28px;letter-spacing:1px;}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:26px;margin-bottom:18px;position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--card-accent,var(--accent));}
+.card.worker{--card-accent:var(--orange);}
+.card.customer{--card-accent:var(--accent2);}
+.card.po{--card-accent:var(--accent3);}
+.card-title{font-family:'IBM Plex Mono';font-size:10px;letter-spacing:3px;color:var(--card-accent,var(--accent));text-transform:uppercase;margin-bottom:18px;padding-left:14px;}
+
+/* ── FORMS ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.span-2{grid-column:span 2;}
+.field{display:flex;flex-direction:column;gap:6px;}
+label{font-size:10px;font-family:'IBM Plex Mono';color:var(--label);letter-spacing:1.5px;text-transform:uppercase;}
+label .req{color:var(--red);margin-left:3px;}
+input,select,textarea{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans';font-size:13px;padding:10px 13px;border-radius:6px;outline:none;transition:border-color 0.2s,box-shadow 0.2s;width:100%;-webkit-appearance:none;}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(240,192,64,0.1);}
+select option{background:var(--surface2);}
+textarea{resize:vertical;min-height:80px;}
+input.invalid,select.invalid{border-color:var(--red)!important;box-shadow:0 0 0 3px rgba(239,68,68,0.1)!important;}
+
+/* ── SUBMIT BUTTONS ── */
+.submit-btn{width:100%;border:none;font-family:'Bebas Neue';font-size:20px;letter-spacing:4px;padding:14px;border-radius:8px;cursor:pointer;transition:all 0.2s;margin-top:6px;}
+.submit-btn.worker{background:var(--orange);color:#0d0f14;}
+.submit-btn.worker:hover{background:#fb923c;}
+.submit-btn.customer{background:var(--accent2);color:#fff;}
+.submit-btn.customer:hover{background:#60a5fa;}
+.submit-btn.po{background:var(--accent3);color:#fff;}
+.submit-btn.po:hover{background:#c084fc;}
+.submit-btn:disabled{background:var(--border);color:var(--muted);cursor:not-allowed;transform:none;}
+
+/* ── STATUS CHIP ── */
+.status-row{display:flex;gap:8px;flex-wrap:wrap;}
+.s-btn{padding:7px 16px;border-radius:20px;border:1.5px solid var(--border);background:transparent;color:var(--muted);font-family:'IBM Plex Mono';font-size:11px;cursor:pointer;transition:all 0.15s;letter-spacing:1px;}
+.s-btn:hover{border-color:var(--label);color:var(--text);}
+.s-btn.active-green{border-color:var(--green);color:var(--green);background:rgba(34,197,94,0.08);}
+.s-btn.active-orange{border-color:var(--orange);color:var(--orange);background:rgba(249,115,22,0.08);}
+.s-btn.active-red{border-color:var(--red);color:var(--red);background:rgba(239,68,68,0.08);}
+.s-btn.active-blue{border-color:var(--accent2);color:var(--accent2);background:rgba(59,130,246,0.08);}
+.s-btn.active-purple{border-color:var(--accent3);color:var(--accent3);background:rgba(168,85,247,0.08);}
+
+/* ── DIVIDER ── */
+hr.divider{border:none;border-top:1px solid var(--border);margin:16px 0;}
+
+/* ── RECORDS LIST ── */
+.records-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.records-title{font-family:'IBM Plex Mono';font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
+.records-count{font-family:'IBM Plex Mono';font-size:10px;color:var(--muted);}
+.record-list{display:flex;flex-direction:column;gap:8px;}
+.record-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;transition:border-color 0.15s;}
+.record-item:hover{border-color:var(--border2);}
+.record-main{flex:1;min-width:0;}
+.record-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.record-meta{font-size:11px;color:var(--muted);margin-top:2px;font-family:'IBM Plex Mono';}
+.record-badges{display:flex;gap:6px;align-items:center;flex-shrink:0;}
+.badge{padding:3px 8px;border-radius:4px;font-family:'IBM Plex Mono';font-size:9px;font-weight:600;letter-spacing:1px;}
+.badge-green{background:rgba(34,197,94,0.12);color:var(--green);border:1px solid rgba(34,197,94,0.25);}
+.badge-orange{background:rgba(249,115,22,0.12);color:var(--orange);border:1px solid rgba(249,115,22,0.25);}
+.badge-red{background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.25);}
+.badge-blue{background:rgba(59,130,246,0.12);color:var(--accent2);border:1px solid rgba(59,130,246,0.25);}
+.badge-purple{background:rgba(168,85,247,0.12);color:var(--accent3);border:1px solid rgba(168,85,247,0.25);}
+.badge-muted{background:rgba(107,114,128,0.1);color:var(--muted);border:1px solid rgba(107,114,128,0.2);}
+.record-actions{display:flex;gap:6px;flex-shrink:0;}
+.btn-icon{background:transparent;border:1px solid var(--border);color:var(--muted);padding:5px 9px;border-radius:5px;cursor:pointer;font-size:12px;transition:all 0.15s;}
+.btn-icon:hover{border-color:var(--accent);color:var(--accent);}
+.btn-icon.del:hover{border-color:var(--red);color:var(--red);}
+.empty-list{text-align:center;padding:32px;color:var(--muted);font-family:'IBM Plex Mono';font-size:12px;}
+
+/* ── CONNECTION BAR ── */
+#connBanner{background:rgba(240,192,64,0.06);border:1px solid rgba(240,192,64,0.2);border-radius:8px;padding:10px 16px;font-family:'IBM Plex Mono';font-size:11px;color:var(--label);margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+#connBanner .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 1.2s ease-in-out infinite;flex-shrink:0;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.2;}}
+
+/* ── URL SETUP ── */
+.url-setup{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:16px 18px;margin-bottom:20px;}
+.url-row{display:flex;gap:8px;align-items:center;}
+.url-input{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono';font-size:11px;padding:9px 12px;border-radius:6px;outline:none;}
+.url-input:focus{border-color:var(--accent);}
+.btn-sm{padding:8px 16px;border-radius:6px;border:none;font-family:'IBM Plex Mono';font-size:10px;letter-spacing:1px;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.btn-primary{background:var(--accent);color:#0d0f14;font-weight:700;}
+.btn-primary:hover{background:#ffd060;}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--muted);}
+.btn-outline:hover{border-color:var(--label);color:var(--text);}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(100px);color:#fff;font-family:'IBM Plex Mono';font-size:12px;padding:10px 22px;border-radius:7px;z-index:9999;transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap;pointer-events:none;background:var(--green);}
+#toast.show{transform:translateX(-50%) translateY(0);}
+#toast.error{background:var(--red);}
+#toast.warning{background:var(--orange);}
+
+/* ── CONFIRM MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:28px;max-width:380px;width:90%;}
+.modal-title{font-family:'IBM Plex Mono';font-size:11px;color:var(--red);letter-spacing:2px;margin-bottom:12px;}
+.modal-body{font-size:13px;color:var(--label);line-height:1.6;margin-bottom:18px;}
+.modal-btns{display:flex;gap:10px;justify-content:flex-end;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:600px){.grid-2,.grid-3{grid-template-columns:1fr;}.span-2{grid-column:span 1;}.tab-bar{padding:0 12px;}.container{padding:0 12px;}}
+
+/* ══ THEME: DAY MODE ══════════════════════════════════════════════════ */
+[data-theme="day"] {
+  --bg:#f0f2f5;--surface:#ffffff;--surface2:#f5f7fa;--surface3:#eef0f5;
+  --border:#d1d5e0;--border2:#b8bed0;
+  --accent:#c8960a;--accent2:#2563eb;--accent3:#7c3aed;
+  --green:#16a34a;--red:#dc2626;--orange:#ea580c;--purple:#7c3aed;
+  --text:#111827;--muted:#6b7280;--label:#374151;
+}
+[data-theme="day"] .header,[data-theme="day"] .topbar{background:#fff;border-bottom-color:var(--accent);}
+[data-theme="day"] .card,[data-theme="day"] .kpi,[data-theme="day"] .chart-card{background:#fff;}
+[data-theme="day"] .login-box{background:#fff;}
+[data-theme="day"] input,[data-theme="day"] select,[data-theme="day"] textarea{background:#f5f7fa;border-color:#d1d5e0;color:#111827;}
+[data-theme="day"] .record-item{background:#f5f7fa;border-color:#d1d5e0;}
+[data-theme="day"] .record-item:hover{border-color:#9ca3af;}
+[data-theme="day"] .tab-bar{background:#fff;border-color:#e5e7eb;}
+[data-theme="day"] .url-setup{background:#f5f7fa;border-color:#d1d5e0;}
+[data-theme="day"] .modal{background:#fff;border-color:#d1d5e0;}
+[data-theme="day"] .nav-tab{color:#6b7280;}
+[data-theme="day"] .nav-tab:hover{color:#111827;border-color:#9ca3af;}
+[data-theme="day"] .nav-tab.active{color:var(--accent);border-color:var(--accent);background:rgba(200,150,10,0.06);}
+[data-theme="day"] .period-btn.active{background:var(--accent);color:#fff;}
+[data-theme="day"] .bar,.trend-bar{background:var(--accent);}
+[data-theme="day"] .login-input{background:#f5f7fa;border-color:#d1d5e0;color:#111827;}
+[data-theme="day"] #loginScreen{background:radial-gradient(ellipse at 60% 40%,rgba(200,150,10,0.06) 0%,transparent 60%),#f0f2f5;}
+[data-theme="day"] .table-header,[data-theme="day"] .filters{background:#fff;border-color:#e5e7eb;}
+[data-theme="day"] table thead th{background:#f5f7fa;color:#374151;}
+[data-theme="day"] table tbody tr:hover td{background:#eef0f5;}
+/* ══════════════════════════════════════════════════════════════════════ */
+
+/* ── Theme Toggle Button ── */
+.theme-toggle{background:transparent;border:1px solid var(--border,#2a2f3d);color:var(--muted,#6b7280);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;padding:5px 11px;border-radius:5px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:5px;}
+.theme-toggle:hover{border-color:var(--accent,#f0c040);color:var(--accent,#f0c040);}
+.theme-toggle .t-icon{font-size:13px;}
+
+/* ── Back to Portal ── */
+.back-to-portal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted, #6b7280);
+  text-decoration: none;
+  padding: 5px 11px;
+  border: 1px solid var(--border, #2a2f3d);
+  border-radius: 5px;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+.back-to-portal:hover {
+  color: var(--accent, #f0c040);
+  border-color: var(--accent, #f0c040);
+  background: var(--accent-dim, rgba(240,192,64,0.06));
+}
+.session-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: var(--muted, #6b7280);
+  padding: 4px 9px;
+  border: 1px solid var(--border, #2a2f3d);
+  border-radius: 4px;
+  white-space: nowrap;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">MFG<span>OPS</span> <span style="font-size:14px;color:var(--muted);letter-spacing:2px;">MAINTAINER</span></div>
+  <div class="header-right" style="display:flex;align-items:center;gap:10px;">
+    <span class="session-badge" id="sessionBadge">—</span>
+    <a class="back-to-portal" href="index.html" onclick="if(window.parent!==window){window.parent.history.back();return false;}">← PORTAL</a>
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()"><span class="t-icon">☀️</span> DAY</button>
+    <span id="live-clock">--:--:--</span></div>
+</div>
+
+<div class="tab-bar">
+  <button class="tab active" onclick="showTab('worker',this)"><span class="tab-icon">👷</span>Workers</button>
+  <button class="tab" onclick="showTab('customer',this)"><span class="tab-icon">🏢</span>Customers</button>
+  <button class="tab" onclick="showTab('po',this)"><span class="tab-icon">📋</span>Purchase Orders</button>
+  <button class="tab" onclick="showTab('backup',this)"><span class="tab-icon">🗄</span>Backup</button>
+  <button class="tab" onclick="showTab('setup',this)"><span class="tab-icon">⚙️</span>Setup</button>
+</div>
+
+<!-- ══════════════════════════════════
+     PAGE: WORKERS
+═══════════════════════════════════ -->
+<div id="page-worker" class="page active">
+<div class="container">
+  <div class="page-title">Worker Registry</div>
+  <div class="page-sub">// ADD · EDIT · MANAGE WORKERS</div>
+
+  <div id="connBanner-worker">
+    <div class="dot"></div>
+    <span id="connText-worker">Not connected — go to Setup tab to enter your Apps Script URL</span>
+  </div>
+
+  <!-- Add/Edit Form -->
+  <form id="workerForm" novalidate>
+    <div class="card worker">
+      <div class="card-title">Worker Details</div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Worker ID <span class="req">*</span></label>
+          <input id="w_workerId" placeholder="e.g. IND-007 / USA-012" required>
+        </div>
+        <div class="field">
+          <label>Full Name <span class="req">*</span></label>
+          <input id="w_workerName" placeholder="Full name" required>
+        </div>
+        <div class="field">
+          <label>Team <span class="req">*</span></label>
+          <select id="w_team" required>
+            <option value="">— Select —</option>
+            <option value="India">🇮🇳 India</option>
+            <option value="USA">🇺🇸 USA</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Shift</label>
+          <select id="w_shift">
+            <option value="Morning">Morning (6AM–2PM)</option>
+            <option value="Afternoon">Afternoon (2PM–10PM)</option>
+            <option value="Night">Night (10PM–6AM)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Supervisor</label>
+          <input id="w_supervisor" placeholder="Supervisor name">
+        </div>
+        <div class="field">
+          <label>Primary Operation</label>
+          <select id="w_primaryOp">
+            <option value="">— Select —</option>
+            <option>RFQ Handling</option><option>Cutting</option><option>Bending</option>
+            <option>Punching</option><option>Forming</option><option>Welding</option>
+            <option>Quality Check</option><option>Assembly</option><option>Finishing</option>
+            <option>Shipping Prep</option><option>Shipping</option><option>Shipping Monitor</option>
+            <option>NCM Handling</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <select id="w_status">
+            <option value="Active">Active</option>
+            <option value="On Leave">On Leave</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Join Date</label>
+          <input type="date" id="w_joinDate">
+        </div>
+        <div class="field span-2">
+          <label>Assigned Customers (comma-separated)</label>
+          <input id="w_customers" placeholder="Customer A, Customer B, Customer C">
+        </div>
+        <div class="field span-2">
+          <label>Skills / Notes</label>
+          <textarea id="w_notes" rows="2" placeholder="Certifications, skills, notes..."></textarea>
+        </div>
+      </div>
+    </div>
+    <input type="hidden" id="w_editMode" value="add">
+    <div style="display:flex;gap:10px;">
+      <button type="submit" class="submit-btn worker" id="workerSubmitBtn">👷 ADD WORKER</button>
+      <button type="button" class="btn-sm btn-outline" id="workerCancelBtn" style="display:none;padding:12px 20px;" onclick="cancelWorkerEdit()">CANCEL</button>
+    </div>
+  </form>
+
+  <!-- Existing Workers List -->
+  <div style="margin-top:28px;">
+    <div class="records-header">
+      <div class="records-title">Registered Workers</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <select id="w_filterTeam" onchange="renderWorkerList()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono';font-size:10px;padding:5px 9px;border-radius:5px;outline:none;">
+          <option value="">All Teams</option><option>India</option><option>USA</option>
+        </select>
+        <select id="w_filterStatus" onchange="renderWorkerList()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono';font-size:10px;padding:5px 9px;border-radius:5px;outline:none;">
+          <option value="">All Status</option><option>Active</option><option>On Leave</option><option>Inactive</option>
+        </select>
+        <span id="workerCount" class="records-count">0 workers</span>
+      </div>
+    </div>
+    <div class="record-list" id="workerList"><div class="empty-list">No workers loaded</div></div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════
+     PAGE: CUSTOMERS
+═══════════════════════════════════ -->
+<div id="page-customer" class="page">
+<div class="container">
+  <div class="page-title">Customer Master</div>
+  <div class="page-sub">// ADD · EDIT · MANAGE CUSTOMERS</div>
+
+  <!-- Add/Edit Form -->
+  <form id="customerForm" novalidate>
+    <div class="card customer">
+      <div class="card-title">Customer Details</div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Customer Name <span class="req">*</span></label>
+          <input id="c_customerName" placeholder="e.g. Customer A" required>
+        </div>
+        <div class="field">
+          <label>Company Full Name</label>
+          <input id="c_company" placeholder="e.g. Alpha Manufacturing Inc.">
+        </div>
+        <div class="field">
+          <label>Country</label>
+          <select id="c_country">
+            <option value="">— Select —</option>
+            <option>USA</option><option>India</option><option>UK</option>
+            <option>Germany</option><option>Canada</option><option>Australia</option>
+            <option>UAE</option><option>Singapore</option><option>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Priority</label>
+          <select id="c_priority">
+            <option value="High">🔴 High</option>
+            <option value="Medium" selected>🟡 Medium</option>
+            <option value="Low">🟢 Low</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Contact Person</label>
+          <input id="c_contactPerson" placeholder="Primary contact name">
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="c_email" placeholder="contact@company.com">
+        </div>
+        <div class="field">
+          <label>Payment Terms</label>
+          <select id="c_paymentTerms">
+            <option value="Net 30">Net 30</option>
+            <option value="Net 45">Net 45</option>
+            <option value="Net 60">Net 60</option>
+            <option value="Net 15">Net 15</option>
+            <option value="COD">COD</option>
+            <option value="Advance">Advance</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Customer ID (auto-assigned if blank)</label>
+          <input id="c_customerId" placeholder="CUST-001">
+        </div>
+      </div>
+    </div>
+    <input type="hidden" id="c_editMode" value="add">
+    <div style="display:flex;gap:10px;">
+      <button type="submit" class="submit-btn customer" id="customerSubmitBtn">🏢 ADD CUSTOMER</button>
+      <button type="button" class="btn-sm btn-outline" id="customerCancelBtn" style="display:none;padding:12px 20px;" onclick="cancelCustomerEdit()">CANCEL</button>
+    </div>
+  </form>
+
+  <!-- Existing Customers List -->
+  <div style="margin-top:28px;">
+    <div class="records-header">
+      <div class="records-title">Registered Customers</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <select id="c_filterPriority" onchange="renderCustomerList()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono';font-size:10px;padding:5px 9px;border-radius:5px;outline:none;">
+          <option value="">All Priorities</option><option>High</option><option>Medium</option><option>Low</option>
+        </select>
+        <span id="customerCount" class="records-count">0 customers</span>
+      </div>
+    </div>
+    <div class="record-list" id="customerList"><div class="empty-list">No customers loaded</div></div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════
+     PAGE: PURCHASE ORDERS
+═══════════════════════════════════ -->
+<div id="page-po" class="page">
+<div class="container">
+  <div class="page-title">Jobs &amp; Purchase Orders</div>
+  <div class="page-sub">// ADD · EDIT · TRACK JOB ORDERS &amp; POs</div>
+
+  <!-- Add/Edit Form -->
+  <form id="poForm" novalidate>
+    <div class="card po">
+      <div class="card-title">PO / Job Details</div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Job / PO Number <span class="req">*</span></label>
+          <input id="p_jobNumber" placeholder="e.g. JOB-2025-001" required>
+        </div>
+        <div class="field">
+          <label>Customer <span class="req">*</span></label>
+          <select id="p_customer" required>
+            <option value="">— Select Customer —</option>
+          </select>
+        </div>
+        <div class="field span-2">
+          <label>Part / Product Description <span class="req">*</span></label>
+          <input id="p_partName" placeholder="e.g. Side Panel Assembly — 3mm SS304" required>
+        </div>
+        <div class="field">
+          <label>Total Quantity</label>
+          <input type="number" id="p_totalQty" placeholder="0" min="0">
+        </div>
+        <div class="field">
+          <label>Unit Price</label>
+          <input type="number" id="p_unitPrice" placeholder="0.00" step="0.01" min="0">
+        </div>
+        <div class="field">
+          <label>Currency</label>
+          <select id="p_currency">
+            <option value="USD">USD — US Dollar</option>
+            <option value="INR">INR — Indian Rupee</option>
+            <option value="GBP">GBP — British Pound</option>
+            <option value="EUR">EUR — Euro</option>
+            <option value="AUD">AUD — Australian Dollar</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Priority</label>
+          <select id="p_priority">
+            <option value="High">🔴 High</option>
+            <option value="Medium" selected>🟡 Medium</option>
+            <option value="Low">🟢 Low</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Start Date</label>
+          <input type="date" id="p_startDate">
+        </div>
+        <div class="field">
+          <label>Due Date</label>
+          <input type="date" id="p_dueDate">
+        </div>
+
+        <!-- PO Status Buttons -->
+        <div class="field span-2">
+          <label>PO Status</label>
+          <div class="status-row" id="poStatusRow">
+            <button type="button" class="s-btn active-blue" data-val="Open"       onclick="setPOStatus(this,'active-blue')">📂 Open</button>
+            <button type="button" class="s-btn"             data-val="In Progress" onclick="setPOStatus(this,'active-purple')">⚙️ In Progress</button>
+            <button type="button" class="s-btn"             data-val="On Hold"     onclick="setPOStatus(this,'active-orange')">⏸ On Hold</button>
+            <button type="button" class="s-btn"             data-val="Completed"   onclick="setPOStatus(this,'active-green')">✅ Completed</button>
+            <button type="button" class="s-btn"             data-val="Shipped"     onclick="setPOStatus(this,'active-green')">🚢 Shipped</button>
+            <button type="button" class="s-btn"             data-val="Cancelled"   onclick="setPOStatus(this,'active-red')">❌ Cancelled</button>
+          </div>
+          <input type="hidden" id="p_status" value="Open">
+        </div>
+
+        <div class="field span-2">
+          <label>Notes / Special Instructions</label>
+          <textarea id="p_notes" rows="2" placeholder="Material certs required, finish specs, delivery instructions..."></textarea>
+        </div>
+        <div class="field">
+          <label>Created By</label>
+          <input id="p_createdBy" placeholder="Your name / initials">
+        </div>
+      </div>
+    </div>
+    <input type="hidden" id="p_editMode" value="add">
+    <div style="display:flex;gap:10px;">
+      <button type="submit" class="submit-btn po" id="poSubmitBtn" style="flex:1">📋 ADD JOB / PO</button>
+      <button type="button" class="btn-sm btn-outline" id="poCancelBtn" style="display:none;padding:12px 20px;" onclick="cancelPOEdit()">CANCEL</button>
+    </div>
+  </form>
+
+  <!-- Existing POs List -->
+  <div style="margin-top:28px;">
+    <div class="records-header">
+      <div class="records-title">Purchase Orders</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <select id="p_filterCustomer" onchange="renderPOList()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono';font-size:10px;padding:5px 9px;border-radius:5px;outline:none;">
+          <option value="">All Customers</option>
+        </select>
+        <select id="p_filterStatus" onchange="renderPOList()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono';font-size:10px;padding:5px 9px;border-radius:5px;outline:none;">
+          <option value="">All Statuses</option>
+          <option>Open</option><option>In Progress</option><option>On Hold</option>
+          <option>Completed</option><option>Shipped</option><option>Cancelled</option>
+        </select>
+        <span id="poCount" class="records-count">0 orders</span>
+      </div>
+    </div>
+    <div class="record-list" id="poList"><div class="empty-list">No orders loaded</div></div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════
+     PAGE: BACKUP
+═══════════════════════════════════ -->
+<div id="page-backup" class="page">
+<div class="container">
+  <div class="page-title">Data Backup</div>
+  <div class="page-sub">// ARCHIVE OLD WORK LOGS & COMPLETED POs</div>
+
+  <div class="card worker" style="margin-bottom:14px;">
+    <div class="card-title">How Archiving Works</div>
+    <p style="font-size:12px;color:var(--muted);line-height:1.8;">
+      Work logs older than the threshold → moved to <strong style="color:var(--accent)">Archive_WorkLogs_YYYY</strong> sheet.<br>
+      Completed / Shipped / Cancelled POs older than the threshold → moved to <strong style="color:var(--accent)">Archive_POs_YYYY</strong> sheet.<br>
+      Each year gets its own archive sheet. <strong>Source rows are only deleted after the copy succeeds.</strong>
+    </p>
+    <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:9px 14px;margin-top:10px;font-family:'IBM Plex Mono';font-size:10px;color:#ef4444;">
+      ⚠ IRREVERSIBLE — always run Preview first. Archived rows are permanently removed from the live sheet.
+    </div>
+  </div>
+
+  <div class="card worker" style="margin-bottom:14px;">
+    <div class="card-title">Archive Settings</div>
+    <div class="grid-2" style="max-width:500px;gap:14px;margin-bottom:14px;">
+      <div class="field">
+        <label>Archive data older than</label>
+        <select id="m_archiveMonths">
+          <option value="6">6 months</option>
+          <option value="12" selected>12 months (1 year)</option>
+          <option value="18">18 months</option>
+          <option value="24">24 months (2 years)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Archive type</label>
+        <select id="m_archiveType">
+          <option value="both">Work Logs + POs</option>
+          <option value="logs">Work Logs only</option>
+          <option value="pos">POs only</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-sm" onclick="mRunPreview()" style="background:var(--accent);color:#0d0f14;border:none;">🔍 PREVIEW ARCHIVE</button>
+  </div>
+
+  <div id="m_previewCard" class="card worker" style="display:none;margin-bottom:14px;">
+    <div class="card-title">Preview Results</div>
+    <div id="m_previewContent"></div>
+    <div id="m_actionRow" style="display:none;margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <button class="btn-sm" id="m_archiveBtn" onclick="mDoArchive()" style="background:#ef4444;color:#fff;border:none;">▶ CONFIRM & ARCHIVE</button>
+      <span id="m_archiveStatus" style="font-family:'IBM Plex Mono';font-size:11px;color:var(--muted);"></span>
+    </div>
+  </div>
+
+  <div class="card worker">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div class="card-title" style="margin-bottom:0">Existing Archive Sheets</div>
+      <button class="btn-sm btn-outline" onclick="mLoadArchiveList()">↻ REFRESH</button>
+    </div>
+    <div id="m_archiveList" style="font-family:'IBM Plex Mono';font-size:11px;color:var(--muted);">Click Refresh to load.</div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════
+     PAGE: SETUP
+═══════════════════════════════════ -->
+<div id="page-setup" class="page">
+<div class="container">
+  <div class="page-title">Setup</div>
+  <div class="page-sub">// CONNECT TO GOOGLE SHEETS</div>
+  <div class="card">
+    <div class="card-title">Apps Script URL</div>
+    <div style="padding-left:14px;">
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.7;">
+        Paste your Google Apps Script Web App URL below. This connects the Maintainer form
+        directly to your Google Sheet so workers, customers, and POs are saved live.
+      </p>
+      <div class="url-row" style="margin-bottom:10px;">
+        <input class="url-input" id="setupUrl" placeholder="https://script.google.com/macros/s/...../exec" type="url">
+        <button class="btn-sm btn-primary" onclick="saveAndConnect()">SAVE &amp; CONNECT</button>
+        <a id="testLink" href="#" target="_blank" class="btn-sm btn-outline" onclick="this.href=scriptUrl+'?action=test';return true;" style="text-decoration:none;">TEST ↗</a>
+      </div>
+      <div id="setupStatus" style="font-family:'IBM Plex Mono';font-size:11px;color:var(--muted);"></div>
+
+      <hr class="divider" style="margin:18px 0;">
+      <div style="font-family:'IBM Plex Mono';font-size:10px;color:var(--accent);letter-spacing:2px;margin-bottom:12px;">DEPLOYMENT CHECKLIST</div>
+      <div style="font-size:12px;color:var(--muted);line-height:2;">
+        ☐ Apps Script deployed as <strong style="color:var(--text)">Web App</strong><br>
+        ☐ Execute as: <strong style="color:var(--text)">Me</strong><br>
+        ☐ Who has access: <strong style="color:var(--text)">Anyone</strong> (not "Anyone with Google account")<br>
+        ☐ Created a <strong style="color:var(--text)">New Deployment</strong> after last code change<br>
+        ☐ Opened the Web App URL in browser once to <strong style="color:var(--text)">authorize</strong>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Confirm Delete Modal -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <div class="modal-title">⚠ CONFIRM DELETE</div>
+    <div class="modal-body" id="confirmMsg">Are you sure?</div>
+    <div class="modal-btns">
+      <button class="btn-sm btn-outline" onclick="closeConfirm()">CANCEL</button>
+      <button class="btn-sm" style="background:var(--red);color:#fff;border:none;border-radius:6px;padding:8px 16px;font-family:'IBM Plex Mono';font-size:10px;cursor:pointer;" onclick="doDelete()">DELETE</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast">✓ SAVED</div>
+
+<script>
+
+// ── Theme persistence ──
+// ── Read session from landing page & sync theme ──
+(function() {
+  const t = localStorage.getItem('mfgops_theme') || 'night';
+  document.documentElement.setAttribute('data-theme', t);
+  // Show session badge if exists
+  window.addEventListener('DOMContentLoaded', function() {
+    var sess = null;
+    try { sess = JSON.parse(localStorage.getItem('mfgops_session') || 'null'); } catch(e){}
+    if (sess) {
+      var badge = document.getElementById('sessionBadge');
+      if (badge) badge.textContent = sess.user.toUpperCase() + ' · ' + sess.role.toUpperCase();
+    }
+  });
+})();
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme') || 'night';
+  const next = cur === 'night' ? 'day' : 'night';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('mfgops_theme', next);
+  const btn = document.getElementById('themeToggle');
+  if (btn) {
+    btn.innerHTML = next === 'day'
+      ? '<span class="t-icon">🌙</span> NIGHT'
+      : '<span class="t-icon">☀️</span> DAY';
+  }
+}
+function initThemeBtn() {
+  const t   = localStorage.getItem('mfgops_theme') || 'night';
+  const btn = document.getElementById('themeToggle');
+  if (!btn) return;
+  btn.innerHTML = t === 'day'
+    ? '<span class="t-icon">🌙</span> NIGHT'
+    : '<span class="t-icon">☀️</span> DAY';
+}
+
+
+'use strict';
+
+// ══════════════════════════════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════════════════════════════
+const URL_KEY = 'mfgops_script_url';
+let scriptUrl = localStorage.getItem(URL_KEY) || '';
+
+// ══════════════════════════════════════════════════════════════
+//  IN-MEMORY STORES
+// ══════════════════════════════════════════════════════════════
+let workerStore   = [];
+let customerStore = [];
+let poStore       = [];
+
+// ══════════════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  startClock();
+  initThemeBtn();
+  if (scriptUrl) {
+    document.getElementById('setupUrl').value = scriptUrl;
+    loadAllData();
+  } else {
+    updateConnBanner('worker', 'warning', '⚠ No Apps Script URL set — go to Setup tab to connect');
+  }
+});
+
+function startClock() {
+  const tick = () => document.getElementById('live-clock').textContent = new Date().toLocaleTimeString('en-US',{hour12:false});
+  tick(); setInterval(tick, 1000);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════════════════════════════
+function showTab(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  SMART GAS FETCH (fetch → JSONP fallback)
+// ══════════════════════════════════════════════════════════════
+async function gasFetch(action, params) {
+  if (!scriptUrl) throw new Error('No Apps Script URL configured');
+  const qs  = new URLSearchParams(Object.assign({ action }, params || {})).toString();
+  const url = scriptUrl + '?' + qs;
+
+  // Strategy 1: normal fetch
+  try {
+    const res = await fetch(url, { redirect: 'follow' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch (e) {
+    console.log('[gasFetch] fetch failed:', e.message, '— trying JSONP');
+  }
+
+  // Strategy 2: JSONP
+  return new Promise((resolve, reject) => {
+    const cb = '_mfgcb_' + Date.now();
+    const s  = document.createElement('script');
+    const t  = setTimeout(() => {
+      cleanup();
+      reject(new Error('Timeout. Check: re-deployed? "Anyone" access? Authorized in browser?'));
+    }, 12000);
+    window[cb] = (d) => { cleanup(); resolve(d); };
+    function cleanup() { clearTimeout(t); delete window[cb]; if (s.parentNode) s.parentNode.removeChild(s); }
+    s.onerror = () => { cleanup(); reject(new Error('JSONP script load failed — check deployment')); };
+    s.src = url + '&callback=' + cb;
+    document.head.appendChild(s);
+  });
+}
+
+async function gasPost(action, payload) {
+  if (!scriptUrl) throw new Error('No Apps Script URL configured');
+  const res = await fetch(scriptUrl, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(Object.assign({ action }, payload))
+  });
+  // no-cors means we can't read the response — assume success if no throw
+  return { success: true };
+}
+
+// ══════════════════════════════════════════════════════════════
+//  LOAD ALL DATA ON STARTUP
+// ══════════════════════════════════════════════════════════════
+async function loadAllData() {
+  updateConnBanner('worker', 'loading', 'Connecting to Google Sheets...');
+  try {
+    await Promise.all([loadWorkers(), loadCustomers(), loadPOs()]);
+    updateConnBanner('worker', 'success', `✓ Connected · ${workerStore.length} workers · ${customerStore.length} customers · ${poStore.length} POs`);
+  } catch (e) {
+    updateConnBanner('worker', 'error', '⚠ ' + e.message);
+  }
+}
+
+async function loadWorkers() {
+  try {
+    const d = await gasFetch('getWorkers', {});
+    if (d && d.workers) {
+      workerStore = d.workers;
+      renderWorkerList();
+    }
+  } catch (e) {
+    console.error('loadWorkers:', e.message);
+    throw e;
+  }
+}
+
+async function loadCustomers() {
+  try {
+    const d = await gasFetch('getCustomers', {});
+    if (d && d.customers) {
+      customerStore = d.customers.map(c => typeof c === 'string' ? { customerName: c } : c);
+      renderCustomerList();
+      populatePOCustomerDropdown();
+    }
+  } catch (e) {
+    console.error('loadCustomers:', e.message);
+  }
+}
+
+async function loadPOs() {
+  try {
+    const d = await gasFetch('getPOs', {});
+    if (d && d.pos) {
+      poStore = d.pos;
+      renderPOList();
+      populatePOFilterDropdown();
+    }
+  } catch (e) {
+    console.error('loadPOs:', e.message);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  BANNER HELPERS
+// ══════════════════════════════════════════════════════════════
+function updateConnBanner(page, type, msg) {
+  const id = 'connBanner-' + page;
+  let el = document.getElementById(id);
+  if (!el) return; // only worker page has it, others share
+  const colors = {
+    loading: ['rgba(240,192,64,0.06)','rgba(240,192,64,0.2)','var(--accent)','pulse 1.2s ease-in-out infinite'],
+    success: ['rgba(34,197,94,0.07)','rgba(34,197,94,0.25)','var(--green)','none'],
+    warning: ['rgba(249,115,22,0.07)','rgba(249,115,22,0.3)','var(--orange)','none'],
+    error:   ['rgba(239,68,68,0.07)','rgba(239,68,68,0.3)','var(--red)','none'],
+  };
+  const [bg, bc, dc, da] = colors[type] || colors.loading;
+  el.style.background  = bg;
+  el.style.borderColor = bc;
+  el.querySelector('.dot').style.background = dc;
+  el.querySelector('.dot').style.animation  = da;
+  document.getElementById('connText-worker').textContent = msg;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  WORKERS
+// ══════════════════════════════════════════════════════════════
+function renderWorkerList() {
+  const teamF   = document.getElementById('w_filterTeam').value;
+  const statusF = document.getElementById('w_filterStatus').value;
+  let list = workerStore.filter(w =>
+    (!teamF   || w.team   === teamF) &&
+    (!statusF || (w.status||'Active') === statusF)
+  );
+  document.getElementById('workerCount').textContent = list.length + ' workers';
+  const el = document.getElementById('workerList');
+  if (!list.length) { el.innerHTML = '<div class="empty-list">No workers found</div>'; return; }
+
+  el.innerHTML = list.map(w => {
+    const teamFlag = w.team === 'India' ? '🇮🇳' : w.team === 'USA' ? '🇺🇸' : '🌐';
+    const statusBadge = w.status === 'Active' ? 'badge-green' : w.status === 'On Leave' ? 'badge-orange' : 'badge-red';
+    return `<div class="record-item">
+      <div style="font-size:20px;flex-shrink:0">${teamFlag}</div>
+      <div class="record-main">
+        <div class="record-name">${w.workerName} <span style="color:var(--muted);font-size:11px;font-weight:400">${w.workerId}</span></div>
+        <div class="record-meta">${w.primaryOp||'—'} · ${w.shift||'—'} · Sup: ${w.supervisor||'—'}${w.customers?` · <span style="color:var(--label)">${w.customers}</span>`:''}</div>
+      </div>
+      <div class="record-badges">
+        <span class="badge ${statusBadge}">${w.status||'Active'}</span>
+        <span class="badge badge-muted">${w.team}</span>
+      </div>
+      <div class="record-actions">
+        <button class="btn-icon" onclick='editWorker(${JSON.stringify(w)})' title="Edit">✏</button>
+        <button class="btn-icon del" onclick='confirmDeleteWorker(${JSON.stringify(w.workerId)},${JSON.stringify(w.workerName)})' title="Delete">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+document.getElementById('workerForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const id   = document.getElementById('w_workerId').value.trim();
+  const name = document.getElementById('w_workerName').value.trim();
+  const team = document.getElementById('w_team').value;
+
+  let valid = true;
+  [['w_workerId',id],['w_workerName',name],['w_team',team]].forEach(([fid, val]) => {
+    const el = document.getElementById(fid);
+    if (!val) { el.classList.add('invalid'); valid = false; }
+    else el.classList.remove('invalid');
+  });
+  if (!valid) { showToast('Fill required fields', 'error'); return; }
+
+  const btn     = document.getElementById('workerSubmitBtn');
+  const payload = {
+    workerId:    id,
+    workerName:  name,
+    team:        team,
+    shift:       document.getElementById('w_shift').value,
+    supervisor:  document.getElementById('w_supervisor').value.trim(),
+    primaryOp:   document.getElementById('w_primaryOp').value,
+    status:      document.getElementById('w_status').value,
+    joinDate:    document.getElementById('w_joinDate').value,
+    customers:   document.getElementById('w_customers').value.trim(),
+    notes:       document.getElementById('w_notes').value.trim(),
+  };
+
+  btn.disabled = true;
+  btn.textContent = 'SAVING...';
+  const isEdit = document.getElementById('w_editMode').value === 'edit';
+
+  try {
+    if (scriptUrl) {
+      await gasPost(isEdit ? 'updateWorker' : 'addWorker', payload);
+    }
+    // Update local store
+    if (isEdit) {
+      const idx = workerStore.findIndex(w => w.workerId === id);
+      if (idx >= 0) workerStore[idx] = payload; else workerStore.push(payload);
+    } else {
+      workerStore.push(payload);
+    }
+    renderWorkerList();
+    this.reset();
+    cancelWorkerEdit();
+    showToast(isEdit ? '✓ Worker updated' : '✓ Worker added: ' + name);
+  } catch (err) {
+    showToast('✗ ' + err.message, 'error');
+  }
+
+  btn.disabled = false;
+  btn.textContent = isEdit ? '✓ UPDATE WORKER' : '👷 ADD WORKER';
+});
+
+function editWorker(w) {
+  document.getElementById('w_workerId').value    = w.workerId || '';
+  document.getElementById('w_workerId').disabled = true;
+  document.getElementById('w_workerName').value  = w.workerName || '';
+  document.getElementById('w_team').value        = w.team || '';
+  document.getElementById('w_shift').value       = w.shift || 'Morning';
+  document.getElementById('w_supervisor').value  = w.supervisor || '';
+  document.getElementById('w_primaryOp').value   = w.primaryOp || '';
+  document.getElementById('w_status').value      = w.status || 'Active';
+  document.getElementById('w_joinDate').value    = w.joinDate || '';
+  document.getElementById('w_customers').value   = w.customers || '';
+  document.getElementById('w_notes').value       = w.notes || '';
+  document.getElementById('w_editMode').value    = 'edit';
+  document.getElementById('workerSubmitBtn').textContent = '✓ UPDATE WORKER';
+  document.getElementById('workerCancelBtn').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function cancelWorkerEdit() {
+  document.getElementById('workerForm').reset();
+  document.getElementById('w_workerId').disabled = false;
+  document.getElementById('w_editMode').value = 'add';
+  document.getElementById('workerSubmitBtn').textContent = '👷 ADD WORKER';
+  document.getElementById('workerCancelBtn').style.display = 'none';
+}
+
+// ── Worker Delete ──
+let pendingDelete = null;
+
+function confirmDeleteWorker(workerId, workerName) {
+  pendingDelete = { type: 'worker', id: workerId };
+  document.getElementById('confirmMsg').innerHTML =
+    `Remove <strong style="color:var(--text)">${workerName}</strong> (${workerId}) from the registry?<br><small style="color:var(--muted)">Log history is kept.</small>`;
+  document.getElementById('confirmModal').classList.add('open');
+}
+
+async function doDelete() {
+  closeConfirm();
+  if (!pendingDelete) return;
+  const { type, id } = pendingDelete;
+  try {
+    if (scriptUrl) await gasPost('deleteWorker', { workerId: id });
+    workerStore = workerStore.filter(w => w.workerId !== id);
+    renderWorkerList();
+    showToast('✓ Worker removed');
+  } catch (e) {
+    showToast('✗ ' + e.message, 'error');
+  }
+  pendingDelete = null;
+}
+
+function closeConfirm() {
+  document.getElementById('confirmModal').classList.remove('open');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  CUSTOMERS
+// ══════════════════════════════════════════════════════════════
+function renderCustomerList() {
+  const prioF = document.getElementById('c_filterPriority').value;
+  let list = customerStore.filter(c => !prioF || (c.priority||'') === prioF);
+  document.getElementById('customerCount').textContent = list.length + ' customers';
+  const el = document.getElementById('customerList');
+  if (!list.length) { el.innerHTML = '<div class="empty-list">No customers found</div>'; return; }
+
+  el.innerHTML = list.map(c => {
+    const prioClass = c.priority === 'High' ? 'badge-red' : c.priority === 'Medium' ? 'badge-orange' : 'badge-green';
+    return `<div class="record-item">
+      <div style="font-size:20px;flex-shrink:0">🏢</div>
+      <div class="record-main">
+        <div class="record-name">${c.customerName} <span style="color:var(--muted);font-size:11px;font-weight:400">${c.customerId||c.customerID||''}</span></div>
+        <div class="record-meta">${c.company||'—'} · ${c.country||'—'}${c.contactPerson?' · '+c.contactPerson:''} · ${c.paymentTerms||'—'}</div>
+      </div>
+      <div class="record-badges">
+        <span class="badge ${prioClass}">${c.priority||'Medium'}</span>
+      </div>
+      <div class="record-actions">
+        <button class="btn-icon" onclick='editCustomer(${JSON.stringify(c)})' title="Edit">✏</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+document.getElementById('customerForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const name = document.getElementById('c_customerName').value.trim();
+  if (!name) { document.getElementById('c_customerName').classList.add('invalid'); showToast('Customer name is required', 'error'); return; }
+  document.getElementById('c_customerName').classList.remove('invalid');
+
+  const btn     = document.getElementById('customerSubmitBtn');
+  const payload = {
+    customerId:    document.getElementById('c_customerId').value.trim(),
+    customerName:  name,
+    company:       document.getElementById('c_company').value.trim(),
+    country:       document.getElementById('c_country').value,
+    contactPerson: document.getElementById('c_contactPerson').value.trim(),
+    email:         document.getElementById('c_email').value.trim(),
+    paymentTerms:  document.getElementById('c_paymentTerms').value,
+    priority:      document.getElementById('c_priority').value,
+  };
+
+  btn.disabled = true; btn.textContent = 'SAVING...';
+  const isEdit = document.getElementById('c_editMode').value === 'edit';
+
+  try {
+    if (scriptUrl) await gasPost(isEdit ? 'updateCustomer' : 'addCustomer', payload);
+    if (isEdit) {
+      const idx = customerStore.findIndex(c => c.customerName === name);
+      if (idx >= 0) customerStore[idx] = payload; else customerStore.push(payload);
+    } else {
+      customerStore.push(payload);
+    }
+    renderCustomerList();
+    populatePOCustomerDropdown();
+    populatePOFilterDropdown();
+    this.reset();
+    cancelCustomerEdit();
+    showToast(isEdit ? '✓ Customer updated' : '✓ Customer added: ' + name);
+  } catch (err) {
+    showToast('✗ ' + err.message, 'error');
+  }
+  btn.disabled = false;
+  btn.textContent = isEdit ? '✓ UPDATE CUSTOMER' : '🏢 ADD CUSTOMER';
+});
+
+function editCustomer(c) {
+  document.getElementById('c_customerId').value     = c.customerId || c.customerID || '';
+  document.getElementById('c_customerName').value   = c.customerName || '';
+  document.getElementById('c_company').value        = c.company || '';
+  document.getElementById('c_country').value        = c.country || '';
+  document.getElementById('c_contactPerson').value  = c.contactPerson || '';
+  document.getElementById('c_email').value          = c.email || '';
+  document.getElementById('c_paymentTerms').value   = c.paymentTerms || 'Net 30';
+  document.getElementById('c_priority').value       = c.priority || 'Medium';
+  document.getElementById('c_editMode').value       = 'edit';
+  document.getElementById('customerSubmitBtn').textContent = '✓ UPDATE CUSTOMER';
+  document.getElementById('customerCancelBtn').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function cancelCustomerEdit() {
+  document.getElementById('customerForm').reset();
+  document.getElementById('c_editMode').value = 'add';
+  document.getElementById('customerSubmitBtn').textContent = '🏢 ADD CUSTOMER';
+  document.getElementById('customerCancelBtn').style.display = 'none';
+}
+
+// ══════════════════════════════════════════════════════════════
+//  PURCHASE ORDERS
+// ══════════════════════════════════════════════════════════════
+function populatePOCustomerDropdown() {
+  const sel = document.getElementById('p_customer');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Select Customer —</option>';
+  customerStore.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c.customerName; o.textContent = c.customerName;
+    sel.appendChild(o);
+  });
+  if (cur) sel.value = cur;
+}
+
+function populatePOFilterDropdown() {
+  const sel = document.getElementById('p_filterCustomer');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">All Customers</option>';
+  const names = [...new Set([
+    ...customerStore.map(c => c.customerName),
+    ...poStore.map(p => p.customer)
+  ])].filter(Boolean).sort();
+  names.forEach(n => {
+    const o = document.createElement('option');
+    o.value = n; o.textContent = n;
+    sel.appendChild(o);
+  });
+  if (cur) sel.value = cur;
+}
+
+function setPOStatus(btn, cls) {
+  document.querySelectorAll('#poStatusRow .s-btn').forEach(b =>
+    b.classList.remove('active-green','active-blue','active-orange','active-purple','active-red'));
+  btn.classList.add(cls);
+  document.getElementById('p_status').value = btn.dataset.val;
+}
+
+function renderPOList() {
+  const custF   = document.getElementById('p_filterCustomer').value;
+  const statusF = document.getElementById('p_filterStatus').value;
+  let list = poStore.filter(p =>
+    (!custF   || (p.customer||'') === custF) &&
+    (!statusF || (p.status||'')   === statusF)
+  );
+  list.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+  document.getElementById('poCount').textContent = list.length + ' orders';
+  const el = document.getElementById('poList');
+  if (!list.length) { el.innerHTML = '<div class="empty-list">No purchase orders found</div>'; return; }
+
+  const statusColor = {
+    'Open':'badge-blue','In Progress':'badge-purple','On Hold':'badge-orange',
+    'Completed':'badge-green','Shipped':'badge-green','Cancelled':'badge-red'
+  };
+  const prioColor = { 'High':'badge-red','Medium':'badge-orange','Low':'badge-green' };
+
+  el.innerHTML = list.map(p => {
+    const sc = statusColor[p.status] || 'badge-muted';
+    const pc = prioColor[p.priority] || 'badge-muted';
+    const qty = p.totalQty ? `${p.totalQty} pcs` : '';
+    const price = p.unitPrice && parseFloat(p.unitPrice) > 0
+      ? `${p.currency||'USD'} ${parseFloat(p.unitPrice).toFixed(2)}/unit` : '';
+    const due = p.dueDate ? `Due: ${p.dueDate}` : '';
+    return `<div class="record-item">
+      <div style="font-size:20px;flex-shrink:0">📋</div>
+      <div class="record-main">
+        <div class="record-name">${p.jobNumber||p.poNumber||'—'} <span style="color:var(--muted);font-size:11px;font-weight:400">· ${p.customer||'—'}</span></div>
+        <div class="record-meta">${p.partName||'—'}${qty?' · '+qty:''}${price?' · '+price:''}${due?' · <span style="color:var(--orange)">'+due+'</span>':''}</div>
+      </div>
+      <div class="record-badges">
+        <span class="badge ${sc}">${p.status||'Open'}</span>
+        <span class="badge ${pc}">${p.priority||'Medium'}</span>
+      </div>
+      <div class="record-actions">
+        <button class="btn-icon" onclick='editPO(${JSON.stringify(p)})' title="Edit">✏</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+document.getElementById('poForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const poNum  = document.getElementById('p_jobNumber').value.trim();
+  const cust   = document.getElementById('p_customer').value;
+  const part   = document.getElementById('p_partName').value.trim();
+
+  let valid = true;
+  [['p_jobNumber',poNum],['p_customer',cust],['p_partName',part]].forEach(([fid,val]) => {
+    const el = document.getElementById(fid);
+    if (!val) { el.classList.add('invalid'); valid = false; }
+    else el.classList.remove('invalid');
+  });
+  if (!valid) { showToast('Fill required fields', 'error'); return; }
+
+  const btn     = document.getElementById('poSubmitBtn');
+  const payload = {
+    jobNumber:  poNum,
+    customer:   cust,
+    partName:   part,
+    totalQty:   document.getElementById('p_totalQty').value || 0,
+    unitPrice:  document.getElementById('p_unitPrice').value || 0,
+    currency:   document.getElementById('p_currency').value,
+    priority:   document.getElementById('p_priority').value,
+    startDate:  document.getElementById('p_startDate').value,
+    dueDate:    document.getElementById('p_dueDate').value,
+    status:     document.getElementById('p_status').value || 'Open',
+    notes:      document.getElementById('p_notes').value.trim(),
+    createdBy:  document.getElementById('p_createdBy').value.trim(),
+    createdAt:  new Date().toISOString(),
+  };
+
+  btn.disabled = true; btn.textContent = 'SAVING...';
+  const isEdit = document.getElementById('p_editMode').value === 'edit';
+
+  try {
+    if (scriptUrl) await gasPost(isEdit ? 'updatePO' : 'addPO', payload);
+    if (isEdit) {
+      const idx = poStore.findIndex(p => (p.jobNumber || p.poNumber) === poNum);
+      if (idx >= 0) poStore[idx] = payload; else poStore.push(payload);
+    } else {
+      poStore.push(payload);
+    }
+    renderPOList();
+    populatePOFilterDropdown();
+    this.reset();
+    cancelPOEdit();
+    showToast(isEdit ? '✓ PO updated: ' + poNum : '✓ PO added: ' + poNum);
+  } catch (err) {
+    showToast('✗ ' + err.message, 'error');
+  }
+  btn.disabled = false;
+  btn.textContent = isEdit ? '✓ UPDATE PO' : '📋 ADD PURCHASE ORDER';
+  // Re-activate Open status btn
+  document.querySelector('#poStatusRow .s-btn[data-val="Open"]').classList.add('active-blue');
+  document.getElementById('p_status').value = 'Open';
+});
+
+function editPO(p) {
+  document.getElementById('p_jobNumber').value    = p.jobNumber || p.poNumber || '';
+  document.getElementById('p_jobNumber').disabled = true;
+  document.getElementById('p_customer').value    = p.customer || '';
+  document.getElementById('p_partName').value    = p.partName || p.partProduct || '';
+  document.getElementById('p_totalQty').value    = p.totalQty || '';
+  document.getElementById('p_unitPrice').value   = p.unitPrice || '';
+  document.getElementById('p_currency').value    = p.currency || 'USD';
+  document.getElementById('p_priority').value    = p.priority || 'Medium';
+  document.getElementById('p_startDate').value   = p.startDate || '';
+  document.getElementById('p_dueDate').value     = p.dueDate || '';
+  document.getElementById('p_notes').value       = p.notes || '';
+  document.getElementById('p_createdBy').value   = p.createdBy || '';
+  // Set status button
+  const statusMap = { 'Open':'active-blue','In Progress':'active-purple','On Hold':'active-orange','Completed':'active-green','Shipped':'active-green','Cancelled':'active-red' };
+  document.querySelectorAll('#poStatusRow .s-btn').forEach(b => b.classList.remove('active-green','active-blue','active-orange','active-purple','active-red'));
+  const activeBtn = document.querySelector(`#poStatusRow .s-btn[data-val="${p.status}"]`);
+  if (activeBtn) activeBtn.classList.add(statusMap[p.status] || 'active-blue');
+  document.getElementById('p_status').value   = p.status || 'Open';
+  document.getElementById('p_editMode').value = 'edit';
+  document.getElementById('poSubmitBtn').textContent = '✓ UPDATE PO';
+  document.getElementById('poCancelBtn').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function cancelPOEdit() {
+  document.getElementById('poForm').reset();
+  document.getElementById('p_jobNumber').disabled = false;
+  document.getElementById('p_editMode').value = 'add';
+  document.getElementById('poSubmitBtn').textContent = '📋 ADD PURCHASE ORDER';
+  document.getElementById('poCancelBtn').style.display = 'none';
+  document.querySelectorAll('#poStatusRow .s-btn').forEach(b =>
+    b.classList.remove('active-green','active-blue','active-orange','active-purple','active-red'));
+  document.querySelector('#poStatusRow .s-btn[data-val="Open"]').classList.add('active-blue');
+  document.getElementById('p_status').value = 'Open';
+}
+
+// ══════════════════════════════════════════════════════════════
+//  SETUP
+// ══════════════════════════════════════════════════════════════
+async function saveAndConnect() {
+  const url = document.getElementById('setupUrl').value.trim();
+  if (!url) { showToast('Enter a URL first', 'error'); return; }
+  scriptUrl = url;
+  localStorage.setItem(URL_KEY, url);
+  document.getElementById('setupStatus').textContent = '✓ URL saved — connecting...';
+  try {
+    const test = await gasFetch('test', {});
+    document.getElementById('setupStatus').textContent =
+      '✅ Connected! ' + (test.message || '') + ' — ' + (test.timestamp || '');
+    showToast('✓ Connected to Google Sheets');
+    await loadAllData();
+  } catch (e) {
+    document.getElementById('setupStatus').textContent = '✗ Connection failed: ' + e.message;
+    showToast('✗ ' + e.message, 'error');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════════════════════
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = type === 'error' ? 'error show' : type === 'warning' ? 'warning show' : 'show';
+  setTimeout(() => { t.className = ''; }, 3800);
+}
+
+// Close confirm modal on backdrop click
+document.getElementById('confirmModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('confirmModal')) closeConfirm();
+});
+
+// ══════════════════════════════════════════════════════════════
+//  BACKUP / ARCHIVE — maintainer page
+// ══════════════════════════════════════════════════════════════
+async function mRunPreview() {
+  if (!scriptUrl) { showToast('Connect Google Sheets first', 'error'); return; }
+  const months = document.getElementById('m_archiveMonths').value;
+  const type   = document.getElementById('m_archiveType').value;
+  const card    = document.getElementById('m_previewCard');
+  const content = document.getElementById('m_previewContent');
+  card.style.display = '';
+  content.innerHTML  = '<div style="font-family:\'IBM Plex Mono\';font-size:11px;color:var(--muted)">⏳ Analysing...</div>';
+  document.getElementById('m_actionRow').style.display = 'none';
+  try {
+    const data = await gasFetch('getBackupPreview', { months, type });
+    if (data.error) { content.innerHTML = `<div style="color:#ef4444;font-family:'IBM Plex Mono';font-size:11px">⚠ ${data.error}</div>`; return; }
+
+    let html = `<div style="font-family:'IBM Plex Mono';font-size:10px;color:var(--muted);margin-bottom:12px;">Cutoff: <strong style="color:var(--accent)">${data.cutoffDate}</strong> (${data.months} months ago)</div>`;
+    let hasData = false;
+
+    if (data.preview && data.preview.logs) {
+      const l = data.preview.logs;
+      html += `<div class="record-item" style="flex-direction:column;align-items:flex-start;gap:8px;margin-bottom:10px;">
+        <div style="font-family:'IBM Plex Mono';font-size:10px;color:var(--warning);letter-spacing:1px;">WORK LOGS</div>
+        <div style="display:flex;gap:24px;flex-wrap:wrap;font-family:'IBM Plex Mono';font-size:12px;">
+          <span>Total: <strong>${l.totalRows}</strong></span>
+          <span style="color:#ef4444">To archive: <strong>${l.toArchive}</strong></span>
+          <span style="color:#22c55e">Remaining: <strong>${l.remaining}</strong></span>
+        </div>
+        ${l.toArchive > 0 ? `<div style="font-size:11px;color:var(--muted)">By year: ${Object.entries(l.byYear).map(([y,c]) => `<strong>${y}</strong>:${c}`).join(' · ')}</div>` : '<div style="color:#22c55e;font-size:11px">✓ Nothing to archive</div>'}
+      </div>`;
+      if (l.toArchive > 0) hasData = true;
+    }
+    if (data.preview && data.preview.pos) {
+      const p = data.preview.pos;
+      html += `<div class="record-item" style="flex-direction:column;align-items:flex-start;gap:8px;">
+        <div style="font-family:'IBM Plex Mono';font-size:10px;color:var(--accent2);letter-spacing:1px;">PURCHASE ORDERS (Completed/Shipped/Cancelled)</div>
+        <div style="display:flex;gap:24px;flex-wrap:wrap;font-family:'IBM Plex Mono';font-size:12px;">
+          <span>Total: <strong>${p.totalRows}</strong></span>
+          <span style="color:#ef4444">To archive: <strong>${p.toArchive}</strong></span>
+          <span style="color:#22c55e">Remaining: <strong>${p.remaining}</strong></span>
+        </div>
+        ${p.toArchive > 0 ? `<div style="font-size:11px;color:var(--muted)">By year: ${Object.entries(p.byYear).map(([y,c]) => `<strong>${y}</strong>:${c}`).join(' · ')}</div>` : '<div style="color:#22c55e;font-size:11px">✓ Nothing to archive</div>'}
+      </div>`;
+      if (p.toArchive > 0) hasData = true;
+    }
+    content.innerHTML = html;
+    if (hasData) {
+      document.getElementById('m_actionRow').style.display = 'flex';
+      document.getElementById('m_archiveStatus').textContent = '';
+    }
+  } catch (e) {
+    content.innerHTML = `<div style="color:#ef4444;font-family:'IBM Plex Mono';font-size:11px">⚠ ${e.message}</div>`;
+  }
+}
+
+async function mDoArchive() {
+  if (!scriptUrl) return;
+  const months = document.getElementById('m_archiveMonths').value;
+  const type   = document.getElementById('m_archiveType').value;
+  if (!confirm(`Archive ${type === 'both' ? 'Work Logs + POs' : type === 'logs' ? 'Work Logs' : 'POs'} older than ${months} months?\n\nRows will be DELETED from live sheets. This cannot be undone.`)) return;
+  const st = document.getElementById('m_archiveStatus');
+  st.textContent = 'Archiving…';
+  st.style.color = 'var(--accent)';
+  document.getElementById('m_archiveBtn').disabled = true;
+  try {
+    const actions = type === 'both' ? ['logs', 'pos'] : [type];
+    const msgs = [];
+    for (const a of actions) {
+      const res = await gasPost(a === 'logs' ? 'archiveLogs' : 'archivePOs', { months });
+      msgs.push(res && res.message ? res.message : JSON.stringify(res));
+    }
+    st.textContent = '✓ ' + msgs.join(' | ');
+    st.style.color = '#22c55e';
+    loadAllData();
+    setTimeout(mLoadArchiveList, 800);
+  } catch (e) {
+    st.textContent = '⚠ ' + e.message;
+    st.style.color = '#ef4444';
+  }
+  document.getElementById('m_archiveBtn').disabled = false;
+}
+
+async function mLoadArchiveList() {
+  if (!scriptUrl) { document.getElementById('m_archiveList').textContent = 'Connect Google Sheets first.'; return; }
+  document.getElementById('m_archiveList').textContent = 'Loading...';
+  try {
+    const data = await gasFetch('getArchiveList', {});
+    if (!data.archives || !data.archives.length) {
+      document.getElementById('m_archiveList').innerHTML = '<span style="color:var(--muted)">No archive sheets found yet.</span>';
+      return;
+    }
+    document.getElementById('m_archiveList').innerHTML =
+      `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;">
+        ${data.archives.map(a => `
+          <div class="record-item" style="flex-direction:column;align-items:flex-start;gap:4px;padding:12px;">
+            <div style="font-family:'IBM Plex Mono';font-size:9px;color:${a.type==='logs'?'var(--warning)':'var(--accent2)'};letter-spacing:1px;">${a.type==='logs'?'WORK LOGS':'POs'} · ${a.year}</div>
+            <div style="font-family:'Bebas Neue';font-size:26px;">${a.rows} rows</div>
+            <div style="font-family:'IBM Plex Mono';font-size:9px;color:var(--muted);">${a.name}</div>
+          </div>`).join('')}
+      </div>`;
+  } catch (e) {
+    document.getElementById('m_archiveList').innerHTML = `<span style="color:#ef4444">⚠ ${e.message}</span>`;
+  }
+}
+</script>
+</body>
+</html>

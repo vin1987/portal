@@ -1,0 +1,1679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MFG OPS — Daily Work Log</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0f14;--surface:#161920;--surface2:#1e222c;--border:#2a2f3d;--accent:#f0c040;--accent2:#3b82f6;--danger:#ef4444;--success:#22c55e;--warning:#f97316;--text:#e8eaf0;--muted:#6b7280;--label:#9ca3af;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;min-height:100vh;padding:0 0 80px;}
+
+/* ── HEADER ── */
+.header{background:var(--surface);border-bottom:2px solid var(--accent);padding:16px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.logo{font-family:'Bebas Neue';font-size:26px;letter-spacing:4px;color:var(--accent);}
+.logo span{color:var(--text);}
+.header-right{font-family:'IBM Plex Mono';font-size:12px;color:var(--muted);text-align:right;}
+#live-clock{color:var(--accent);font-size:14px;}
+
+/* ── LOADING BANNER ── */
+#loadingBanner{background:rgba(240,192,64,0.08);border:1px solid rgba(240,192,64,0.25);border-radius:8px;padding:12px 18px;font-family:'IBM Plex Mono';font-size:12px;color:var(--label);margin-bottom:18px;display:flex;align-items:center;gap:10px;}
+#loadingBanner .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 1.2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.2;}}
+
+/* ── CONTAINER ── */
+.container{max-width:780px;margin:32px auto;padding:0 20px;}
+.form-title{font-family:'Bebas Neue';font-size:40px;letter-spacing:3px;line-height:1;margin-bottom:4px;}
+.form-subtitle{font-size:12px;color:var(--muted);font-family:'IBM Plex Mono';margin-bottom:28px;letter-spacing:1px;}
+
+/* ── CARD ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:26px;margin-bottom:18px;position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--accent);}
+.card-title{font-family:'IBM Plex Mono';font-size:10px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:18px;padding-left:14px;}
+
+/* ── GRIDS ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.span-2{grid-column:span 2;}
+.field{display:flex;flex-direction:column;gap:6px;}
+
+/* ── LABELS & INPUTS ── */
+label{font-size:10px;font-family:'IBM Plex Mono';color:var(--label);letter-spacing:1.5px;text-transform:uppercase;}
+label .req{color:var(--danger);margin-left:3px;}
+input,select,textarea{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans';font-size:13px;padding:10px 13px;border-radius:6px;outline:none;transition:border-color 0.2s,box-shadow 0.2s;width:100%;-webkit-appearance:none;}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(240,192,64,0.1);}
+input:disabled,select:disabled{opacity:0.55;cursor:not-allowed;}
+select option{background:var(--surface2);}
+textarea{resize:vertical;min-height:80px;}
+input[type="number"]{-moz-appearance:textfield;}
+input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.6);}
+
+/* ── WORKER PAGE TABS ── */
+.worker-tab-bar{background:var(--surface);border-bottom:1px solid var(--border);display:flex;gap:3px;padding:10px 20px 0;max-width:780px;margin:0 auto;}
+.worker-tab{padding:8px 20px;background:transparent;border:1px solid transparent;border-bottom:none;color:var(--muted);font-family:'IBM Plex Mono';font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border-radius:6px 6px 0 0;transition:all 0.15s;}
+.worker-tab:hover{color:var(--text);border-color:var(--border);}
+.worker-tab.active{color:var(--accent);border-color:var(--border);border-bottom:2px solid var(--bg);background:var(--surface2);margin-bottom:-1px;}
+.worker-page{display:none;}
+.worker-page.active{display:block;}
+.po-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}
+.po-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 18px;margin-bottom:10px;position:relative;overflow:hidden;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;}
+.po-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--accent);}
+.po-job{font-family:'IBM Plex Mono';font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px;}
+.po-customer{font-family:'IBM Plex Mono';font-size:10px;color:var(--accent);letter-spacing:1px;margin-bottom:6px;}
+.po-part{font-size:12px;color:var(--label);}
+.po-meta{display:flex;gap:14px;flex-wrap:wrap;align-items:center;}
+.po-meta span{font-family:'IBM Plex Mono';font-size:10px;color:var(--muted);}
+.po-meta strong{color:var(--label);}
+.po-status-badge{font-family:'IBM Plex Mono';font-size:9px;letter-spacing:1px;padding:4px 10px;border-radius:20px;font-weight:600;}
+.po-status-open{background:rgba(240,192,64,0.12);color:var(--accent);border:1px solid rgba(240,192,64,0.3);}
+.po-status-progress{background:rgba(59,130,246,0.1);color:#3b82f6;border:1px solid rgba(59,130,246,0.3);}
+.po-status-completed{background:rgba(34,197,94,0.1);color:#22c55e;border:1px solid rgba(34,197,94,0.3);}
+.po-status-hold{background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.3);}
+.po-status-shipped{background:rgba(168,85,247,0.1);color:#a855f7;border:1px solid rgba(168,85,247,0.3);}
+.po-status-cancelled{background:rgba(107,114,128,0.1);color:#6b7280;border:1px solid rgba(107,114,128,0.3);}
+.po-empty{text-align:center;padding:48px 20px;font-family:'IBM Plex Mono';font-size:12px;color:var(--muted);}
+.po-count{font-family:'IBM Plex Mono';font-size:10px;color:var(--muted);margin-bottom:10px;}
+
+/* ── AUTO-FILL INDICATOR ── */
+.autofill-badge{display:inline-flex;align-items:center;gap:4px;font-family:'IBM Plex Mono';font-size:9px;color:var(--success);letter-spacing:1px;margin-top:2px;}
+.autofill-badge::before{content:'●';font-size:7px;}
+
+/* ── WORKER INFO PANEL ── */
+.worker-info-panel{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-top:8px;display:none;grid-column:span 2;}
+.worker-info-panel.visible{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.wi-item label{font-size:9px;color:var(--muted);letter-spacing:1px;display:block;margin-bottom:3px;}
+.wi-item span{font-size:13px;color:var(--text);font-weight:500;}
+
+/* ── DATE VALIDATION ── */
+.date-error{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:6px;padding:8px 12px;font-family:'IBM Plex Mono';font-size:11px;color:var(--danger);margin-top:6px;display:none;}
+
+/* ── OPERATIONS GRID ── */
+.ops-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:9px;padding-left:14px;}
+.op-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;display:flex;align-items:center;gap:9px;cursor:pointer;transition:all 0.15s;user-select:none;}
+.op-item:hover{border-color:var(--accent);}
+.op-item.selected{border-color:var(--accent);background:rgba(240,192,64,0.08);}
+.op-item input[type="checkbox"]{width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;padding:0;border:none;}
+.op-label{font-size:12px;font-weight:500;color:var(--text);}
+.op-icon{font-size:15px;}
+.op-item.ncm{border-color:rgba(239,68,68,0.25);}
+.op-item.ncm.selected{border-color:var(--danger);background:rgba(239,68,68,0.08);}
+.op-item.ncm:hover{border-color:var(--danger);}
+
+/* ── NCM FIELDS (conditional) ── */
+#ncmFields{display:none;margin-top:14px;padding-left:14px;}
+#ncmFields.visible{display:block;}
+.ncm-card{background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:16px;}
+.ncm-title{font-family:'IBM Plex Mono';font-size:10px;color:var(--danger);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;}
+
+/* ── STATUS BUTTONS ── */
+.status-row{display:flex;gap:8px;flex-wrap:wrap;padding-left:14px;}
+.status-btn{padding:7px 16px;border-radius:20px;border:1.5px solid var(--border);background:transparent;color:var(--muted);font-family:'IBM Plex Mono';font-size:11px;cursor:pointer;transition:all 0.15s;letter-spacing:1px;}
+.status-btn:hover{border-color:var(--label);color:var(--text);}
+.status-btn.active-green{border-color:var(--success);color:var(--success);background:rgba(34,197,94,0.08);}
+.status-btn.active-yellow{border-color:var(--accent);color:var(--accent);background:rgba(240,192,64,0.08);}
+.status-btn.active-red{border-color:var(--danger);color:var(--danger);background:rgba(239,68,68,0.08);}
+.status-btn.active-blue{border-color:var(--accent2);color:var(--accent2);background:rgba(59,130,246,0.08);}
+.status-btn.active-orange{border-color:var(--warning);color:var(--warning);background:rgba(249,115,22,0.08);}
+
+/* ── HOURS DISPLAY ── */
+.hours-display{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 13px;font-family:'IBM Plex Mono';font-size:13px;color:var(--accent);text-align:center;}
+
+/* ── DIVIDER ── */
+.divider{border:none;border-top:1px solid var(--border);margin:16px 0;}
+
+/* ── SUBMIT ── */
+.submit-btn{width:100%;background:var(--accent);color:#0d0f14;border:none;font-family:'Bebas Neue';font-size:22px;letter-spacing:4px;padding:16px;border-radius:8px;cursor:pointer;transition:all 0.2s;margin-top:8px;}
+.submit-btn:hover{background:#ffd060;transform:translateY(-1px);box-shadow:0 8px 24px rgba(240,192,64,0.3);}
+.submit-btn:active{transform:translateY(0);}
+.submit-btn:disabled{background:var(--border);color:var(--muted);cursor:not-allowed;transform:none;box-shadow:none;}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--success);color:#fff;font-family:'IBM Plex Mono';font-size:12px;padding:11px 24px;border-radius:7px;z-index:9999;transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap;pointer-events:none;}
+#toast.show{transform:translateX(-50%) translateY(0);}
+#toast.error{background:var(--danger);}
+#toast.warning{background:var(--warning);}
+
+/* ── VALIDATION HIGHLIGHT ── */
+input.invalid,select.invalid{border-color:var(--danger)!important;box-shadow:0 0 0 3px rgba(239,68,68,0.1)!important;}
+
+@media(max-width:600px){.grid-2,.grid-3{grid-template-columns:1fr;}.span-2{grid-column:span 1;}.worker-info-panel.visible{grid-template-columns:1fr 1fr;}}
+
+/* ══ THEME: DAY MODE ══════════════════════════════════════════════════ */
+[data-theme="day"] {
+  --bg:#f0f2f5;--surface:#ffffff;--surface2:#f5f7fa;--surface3:#eef0f5;
+  --border:#d1d5e0;--border2:#b8bed0;
+  --accent:#c8960a;--accent2:#2563eb;--accent3:#7c3aed;
+  --green:#16a34a;--red:#dc2626;--orange:#ea580c;--purple:#7c3aed;
+  --text:#111827;--muted:#6b7280;--label:#374151;
+}
+[data-theme="day"] .header,[data-theme="day"] .topbar{background:#fff;border-bottom-color:var(--accent);}
+[data-theme="day"] .card,[data-theme="day"] .kpi,[data-theme="day"] .chart-card{background:#fff;}
+[data-theme="day"] .login-box{background:#fff;}
+[data-theme="day"] input,[data-theme="day"] select,[data-theme="day"] textarea{background:#f5f7fa;border-color:#d1d5e0;color:#111827;}
+[data-theme="day"] .record-item{background:#f5f7fa;border-color:#d1d5e0;}
+[data-theme="day"] .record-item:hover{border-color:#9ca3af;}
+[data-theme="day"] .tab-bar{background:#fff;border-color:#e5e7eb;}
+[data-theme="day"] .url-setup{background:#f5f7fa;border-color:#d1d5e0;}
+[data-theme="day"] .modal{background:#fff;border-color:#d1d5e0;}
+[data-theme="day"] .nav-tab{color:#6b7280;}
+[data-theme="day"] .nav-tab:hover{color:#111827;border-color:#9ca3af;}
+[data-theme="day"] .nav-tab.active{color:var(--accent);border-color:var(--accent);background:rgba(200,150,10,0.06);}
+[data-theme="day"] .period-btn.active{background:var(--accent);color:#fff;}
+[data-theme="day"] .bar,.trend-bar{background:var(--accent);}
+[data-theme="day"] .login-input{background:#f5f7fa;border-color:#d1d5e0;color:#111827;}
+[data-theme="day"] #loginScreen{background:radial-gradient(ellipse at 60% 40%,rgba(200,150,10,0.06) 0%,transparent 60%),#f0f2f5;}
+[data-theme="day"] .table-header,[data-theme="day"] .filters{background:#fff;border-color:#e5e7eb;}
+[data-theme="day"] table thead th{background:#f5f7fa;color:#374151;}
+[data-theme="day"] table tbody tr:hover td{background:#eef0f5;}
+/* ══════════════════════════════════════════════════════════════════════ */
+
+/* ── Theme Toggle Button ── */
+.theme-toggle{background:transparent;border:1px solid var(--border,#2a2f3d);color:var(--muted,#6b7280);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;padding:5px 11px;border-radius:5px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:5px;}
+.theme-toggle:hover{border-color:var(--accent,#f0c040);color:var(--accent,#f0c040);}
+.theme-toggle .t-icon{font-size:13px;}
+
+/* ── Back to Portal ── */
+.back-to-portal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted, #6b7280);
+  text-decoration: none;
+  padding: 5px 11px;
+  border: 1px solid var(--border, #2a2f3d);
+  border-radius: 5px;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+.back-to-portal:hover {
+  color: var(--accent, #f0c040);
+  border-color: var(--accent, #f0c040);
+  background: var(--accent-dim, rgba(240,192,64,0.06));
+}
+.session-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: var(--muted, #6b7280);
+  padding: 4px 9px;
+  border: 1px solid var(--border, #2a2f3d);
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* ── INLINE FIELD ERROR ─────────────────────────────── */
+.field-error {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+  padding: 6px 10px;
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.28);
+  border-radius: 5px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--danger);
+  letter-spacing: 0.4px;
+  line-height: 1.4;
+  animation: err-pop 0.2s cubic-bezier(0.34,1.56,0.64,1);
+}
+.field-error.visible { display: flex; }
+.field-error::before {
+  content: '⚠';
+  font-size: 11px;
+  flex-shrink: 0;
+}
+/* invalid inputs */
+input.invalid, select.invalid, textarea.invalid {
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 0 3px rgba(239,68,68,0.12) !important;
+}
+/* sanitise flash — tiny badge that slides in then fades */
+.strip-notice {
+  display: none;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--warning);
+  letter-spacing: 0.5px;
+  margin-top: 3px;
+  animation: strip-fade 2.2s ease forwards;
+}
+.strip-notice.show { display: block; }
+@keyframes strip-fade {
+  0%   { opacity: 1; }
+  70%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes err-pop {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+/* ops error band */
+#opsError {
+  display: none;
+  margin: 10px 14px 0;
+  padding: 7px 11px;
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.28);
+  border-radius: 5px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--danger);
+  animation: err-pop 0.2s ease;
+}
+#opsError.visible { display: flex; align-items: center; gap: 6px; }
+#opsError::before { content: '⚠'; flex-shrink: 0; }
+/* status error */
+#statusError {
+  display: none;
+  margin: 8px 14px 0;
+  padding: 7px 11px;
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.28);
+  border-radius: 5px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--danger);
+  animation: err-pop 0.2s ease;
+}
+#statusError.visible { display: flex; align-items: center; gap: 6px; }
+#statusError::before { content: '⚠'; flex-shrink: 0; }
+
+
+/* ── MULTI-JOB ENTRIES ─────────────────────────────────────────────── */
+.job-entry {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 16px;
+  overflow: visible;
+}
+.job-entry-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px 0;
+}
+.job-entry-number {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--accent);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.job-entry-remove {
+  background: transparent;
+  border: 1px solid rgba(239,68,68,0.3);
+  color: var(--danger);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1px;
+  padding: 4px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.job-entry-remove:hover { background: rgba(239,68,68,0.1); border-color: var(--danger); }
+.job-entry-body { padding: 14px 20px 18px; }
+.add-job-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--accent-dim, rgba(240,192,64,0.07));
+  border: 1.5px dashed var(--border2);
+  border-radius: 8px;
+  color: var(--accent);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 17px;
+  letter-spacing: 3px;
+  cursor: pointer;
+  transition: all 0.18s;
+  margin-bottom: 6px;
+}
+.add-job-btn:hover { background: var(--accent-dim); border-color: var(--accent); }
+.jobs-summary {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--label);
+  display: none;
+}
+.jobs-summary.visible { display: block; }
+.jobs-summary .summary-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+.jobs-summary .summary-row:last-child { margin-bottom: 0; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">MFG<span>OPS</span></div>
+  <div class="header-right" style="display:flex;align-items:center;gap:10px;">
+    <span class="session-badge" id="sessionBadge">—</span>
+    <a class="back-to-portal" href="index.html" onclick="if(window.parent!==window){window.parent.history.back();return false;}">← PORTAL</a>
+    <div id="live-clock">--:--:--</div>
+        <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()"><span class="t-icon">☀️</span> DAY</button>
+  </div>
+</div>
+
+<div class="worker-tab-bar">
+  <button class="worker-tab active" onclick="switchWorkerTab('entry', this)">📝 Daily Entry</button>
+  <button class="worker-tab" onclick="switchWorkerTab('jobs', this)">📋 My Jobs (POs)</button>
+</div>
+
+<!-- ── TAB: Daily Entry ── -->
+<div id="workerTab-entry" class="worker-page active">
+<div class="container">
+  <div class="form-title">Daily Work Entry</div>
+  <div class="form-subtitle">// SUBMIT BEFORE END OF SHIFT — ONLY TODAY'S DATE IS ACCEPTED</div>
+
+  <!-- Loading banner -->
+  <div id="loadingBanner">
+    <div class="dot"></div>
+    <span id="loadingText">Loading workers and customers from server...</span>
+    <a id="testConnLink" href="#" target="_blank"
+       onclick="this.href = SCRIPT_URL + '?action=test'; return true;"
+       style="margin-left:auto;font-family:'IBM Plex Mono';font-size:10px;color:var(--accent);text-decoration:none;white-space:nowrap;opacity:0.7"
+       title="Open the Apps Script URL in a new tab to verify it is working">
+      🔗 Test connection ↗
+    </a>
+  </div>
+
+  <form id="workForm" novalidate>
+
+    <!-- ── SECTION 1: Worker Identity ── -->
+    <div class="card">
+      <div class="card-title">01 — Worker Identity</div>
+      <div class="grid-2">
+
+        <div class="field">
+          <label>Select Worker <span class="req">*</span></label>
+          <select id="workerSelect" required onchange="onWorkerSelect(); clearErr('workerSelect')">
+            <option value="">— Select Your Name —</option>
+          </select>
+          <div class="field-error" id="err-workerSelect">Please select your name from the list</div>
+        </div>
+
+        <div class="field">
+          <label>Date <span class="req">*</span></label>
+          <input type="date" id="logDate" required>
+          <div class="date-error" id="dateError"></div>
+        </div>
+
+        <!-- Auto-filled worker info panel -->
+        <div class="worker-info-panel" id="workerInfoPanel">
+          <div class="wi-item"><label>Worker ID</label><span id="wi-id">—</span></div>
+          <div class="wi-item"><label>Team</label><span id="wi-team">—</span></div>
+          <div class="wi-item"><label>Supervisor</label><span id="wi-supervisor">—</span></div>
+          <div class="wi-item"><label>Primary Operation</label><span id="wi-op">—</span></div>
+          <div class="wi-item"><label>Shift</label><span id="wi-shift">—</span></div>
+          <div class="wi-item"><label>Status</label><span id="wi-status">—</span></div>
+        </div>
+
+        <!-- Hidden fields auto-populated from worker selection -->
+        <input type="hidden" id="workerName">
+        <input type="hidden" id="workerId">
+        <input type="hidden" id="team">
+        <input type="hidden" id="supervisor">
+
+        <div class="field">
+          <label>Shift Override</label>
+          <select id="shift">
+            <option value="Morning">Morning (6AM–2PM)</option>
+            <option value="Afternoon">Afternoon (2PM–10PM)</option>
+            <option value="Night">Night (10PM–6AM)</option>
+          </select>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── SECTIONS 02–05: Multi-Job Entries ── -->
+    <div id="jobEntriesContainer">
+      <!-- Job entries injected by JS -->
+    </div>
+    <button type="button" class="add-job-btn" onclick="addJobEntry()">＋ ADD ANOTHER JOB ENTRY</button>
+    <div class="jobs-summary" id="jobsSummary"></div>
+
+    <!-- ── SECTION 6: Notes ── -->
+    <div class="card">
+      <div class="card-title">06 — Notes & Escalations</div>
+      <div class="grid-2">
+        <div class="field span-2">
+          <label>Work Summary / Notes</label>
+          <textarea id="workNotes" rows="3" placeholder="Brief summary of what was accomplished today..."
+            oninput="sanitiseText(this,'notes')"></textarea>
+          <span class="strip-notice" id="strip-workNotes">⚠ Special characters removed</span>
+        </div>
+        <div class="field span-2">
+          <label>Escalation / Blockers (if any)</label>
+          <textarea id="escalation" rows="2" placeholder="Machine downtime, material shortage, safety issues..."
+            oninput="sanitiseText(this,'notes')"></textarea>
+          <span class="strip-notice" id="strip-escalation">⚠ Special characters removed</span>
+        </div>
+        <div class="field">
+          <label>Machine / Equipment Used</label>
+          <input type="text" id="machine" placeholder="e.g. Laser Cutter #2, Press Brake"
+            oninput="sanitiseText(this,'equipment')">
+          <span class="strip-notice" id="strip-machine">⚠ Special characters removed</span>
+        </div>
+        <div class="field">
+          <label>Material / Raw Stock Used</label>
+          <input type="text" id="material" placeholder="e.g. SS304, 3mm Plate"
+            oninput="sanitiseText(this,'material')">
+          <span class="strip-notice" id="strip-material">⚠ Special characters removed</span>
+        </div>
+      </div>
+    </div>
+
+    <button type="submit" class="submit-btn" id="submitBtn">▶ SUBMIT DAILY LOG</button>
+
+  </form>
+</div>
+</div>
+
+<!-- ── TAB: My Jobs (POs) ── -->
+<div id="workerTab-jobs" class="worker-page">
+<div class="container">
+  <div class="form-title">My Jobs</div>
+  <div class="form-subtitle">// PURCHASE ORDERS — assigned to your customers</div>
+
+  <div class="po-filters">
+    <select id="po_statusFilter" onchange="renderPOList()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono';font-size:10px;padding:7px 12px;border-radius:6px;outline:none;width:160px;">
+      <option value="">All Statuses</option>
+      <option value="Open">Open</option>
+      <option value="In Progress">In Progress</option>
+      <option value="On Hold">On Hold</option>
+      <option value="Completed">Completed</option>
+      <option value="Shipped">Shipped</option>
+      <option value="Cancelled">Cancelled</option>
+    </select>
+    <input id="po_search" type="text" placeholder="🔍 Search job / part..." oninput="renderPOList()"
+      style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono';font-size:10px;padding:7px 12px;border-radius:6px;outline:none;width:200px;">
+    <button style="background:transparent;border:1px solid var(--border);color:var(--muted);font-family:'IBM Plex Mono';font-size:9px;letter-spacing:1px;padding:7px 14px;border-radius:6px;cursor:pointer;" onclick="loadPOs()">↻ REFRESH</button>
+  </div>
+
+  <div id="po_loading" style="display:none;font-family:'IBM Plex Mono';font-size:11px;color:var(--muted);padding:16px 0;">⏳ Loading jobs...</div>
+  <div id="po_count" class="po-count"></div>
+  <div id="po_list"></div>
+</div>
+</div>
+
+<div id="toast">✓ LOG SUBMITTED</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  CONFIG — Replace with your Apps Script URL
+// ══════════════════════════════════════════════
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyCl5MvV6dQhyAQ9G0owXvDUWnRqvA8iCTcRmzgxhV07blfwdw-S3PXptbT5EfJb9A/exec';
+
+// ══════════════════════════════════════════════
+//  DEMO DATA (used when SCRIPT_URL not set)
+// ══════════════════════════════════════════════
+const DEMO_WORKERS = [
+  {workerId:'IND-001',workerName:'Ravi Kumar',team:'India',supervisor:'Priya S',shift:'Morning',primaryOp:'Cutting',status:'Active'},
+  {workerId:'IND-002',workerName:'Arjun Mehta',team:'India',supervisor:'Priya S',shift:'Morning',primaryOp:'Welding',status:'Active'},
+  {workerId:'IND-003',workerName:'Vikram Singh',team:'India',supervisor:'Priya S',shift:'Afternoon',primaryOp:'Bending',status:'Active'},
+  {workerId:'IND-004',workerName:'Neha Sharma',team:'India',supervisor:'Priya S',shift:'Morning',primaryOp:'Quality Check',status:'Active'},
+  {workerId:'USA-001',workerName:'John Miller',team:'USA',supervisor:'Dave T',shift:'Afternoon',primaryOp:'Assembly',status:'Active'},
+  {workerId:'USA-002',workerName:'Sarah Wilson',team:'USA',supervisor:'Dave T',shift:'Afternoon',primaryOp:'Welding',status:'Active'},
+  {workerId:'USA-003',workerName:'Mike Johnson',team:'USA',supervisor:'Dave T',shift:'Morning',primaryOp:'Shipping Prep',status:'On Leave'},
+];
+const DEMO_CUSTOMERS = ['Customer A','Customer B','Customer C','Customer D'];
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let workers = [];
+let customers = [];
+let selectedWorker = null;
+let allPOs = [];
+
+// ══════════════════════════════════════════════
+//  WORKER TAB SWITCHING
+// ══════════════════════════════════════════════
+function switchWorkerTab(tab, btn) {
+  document.querySelectorAll('.worker-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.worker-page').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('workerTab-' + tab).classList.add('active');
+  if (tab === 'jobs') loadPOs();
+}
+
+// ══════════════════════════════════════════════
+//  PO LIST — worker view
+// ══════════════════════════════════════════════
+async function loadPOs() {
+  const loading = document.getElementById('po_loading');
+  const list    = document.getElementById('po_list');
+  loading.style.display = 'block';
+  list.innerHTML = '';
+
+  if (SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+    allPOs = getDemoPOs();
+    loading.style.display = 'none';
+    renderPOList();
+    return;
+  }
+
+  try {
+    const data = await gasFetch('getPOs', {});
+    allPOs = (data && data.pos) ? data.pos : [];
+  } catch (e) {
+    allPOs = getDemoPOs();
+    console.warn('[PO] Using demo POs:', e.message);
+  }
+  loading.style.display = 'none';
+  renderPOList();
+}
+
+function renderPOList() {
+  const statusF = document.getElementById('po_statusFilter').value;
+  const search  = (document.getElementById('po_search').value || '').toLowerCase().trim();
+
+  let filtered = allPOs.filter(p => {
+    if (statusF && p.status !== statusF) return false;
+    if (search && !( (p.jobNumber||'').toLowerCase().includes(search) ||
+                     (p.partName ||'').toLowerCase().includes(search)  ||
+                     (p.customer ||'').toLowerCase().includes(search)  ||
+                     (p.notes    ||'').toLowerCase().includes(search)  )) return false;
+    return true;
+  });
+
+  // Sort: open/in-progress first, then by dueDate ascending
+  const ORDER = { 'Open': 0, 'In Progress': 1, 'On Hold': 2, 'Completed': 3, 'Shipped': 4, 'Cancelled': 5 };
+  filtered.sort((a, b) => {
+    const so = (ORDER[a.status]||9) - (ORDER[b.status]||9);
+    if (so !== 0) return so;
+    if (a.dueDate && b.dueDate) return a.dueDate.localeCompare(b.dueDate);
+    return 0;
+  });
+
+  document.getElementById('po_count').textContent = filtered.length + ' job' + (filtered.length !== 1 ? 's' : '') + (statusF ? ' · ' + statusF : '') + (search ? ' · "' + search + '"' : '');
+
+  if (!filtered.length) {
+    document.getElementById('po_list').innerHTML = `<div class="po-empty">
+      <div style="font-size:32px;margin-bottom:10px;">📋</div>
+      <div>No jobs found</div>
+      <div style="margin-top:6px;font-size:11px;opacity:0.6;">Try changing the filter or refreshing</div>
+    </div>`;
+    return;
+  }
+
+  document.getElementById('po_list').innerHTML = filtered.map(p => {
+    const statusClass = {
+      'Open':'po-status-open','In Progress':'po-status-progress','On Hold':'po-status-hold',
+      'Completed':'po-status-completed','Shipped':'po-status-shipped','Cancelled':'po-status-cancelled'
+    }[p.status] || 'po-status-open';
+    const isOverdue = p.dueDate && p.dueDate < new Date().toISOString().slice(0,10) && p.status !== 'Completed' && p.status !== 'Shipped' && p.status !== 'Cancelled';
+    return `<div class="po-card">
+      <div class="po-card-left">
+        <div class="po-job">${p.jobNumber}</div>
+        <div class="po-customer">📦 ${p.customer}</div>
+        ${p.partName ? `<div class="po-part">${p.partName}</div>` : ''}
+      </div>
+      <div>
+        <div class="po-meta" style="margin-bottom:8px;">
+          <span><strong>QTY</strong> ${p.totalQty || '—'}</span>
+          ${p.unitPrice && p.unitPrice !== '0' ? `<span><strong>PRICE</strong> ${p.currency||'USD'} ${p.unitPrice}</span>` : ''}
+          ${p.priority ? `<span><strong>PRIORITY</strong> ${p.priority}</span>` : ''}
+        </div>
+        <div class="po-meta" style="margin-bottom:8px;">
+          ${p.startDate ? `<span><strong>START</strong> ${p.startDate}</span>` : ''}
+          ${p.dueDate   ? `<span style="color:${isOverdue?'var(--danger)':'var(--muted)'}"><strong>DUE</strong> ${p.dueDate}${isOverdue?' ⚠':''}</span>` : ''}
+        </div>
+        <span class="po-status-badge ${statusClass}">${p.status}</span>
+      </div>
+      ${p.notes ? `<div style="width:100%;font-size:11px;color:var(--muted);font-style:italic;padding-left:4px;border-top:1px solid var(--border);padding-top:8px;margin-top:4px;">📝 ${p.notes}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function getDemoPOs() {
+  return [
+    { jobNumber:'JOB-2024-101', customer:'Customer A', partName:'Side Panel', totalQty:'50', unitPrice:'12.50', currency:'USD', startDate:'2024-01-10', dueDate:'2024-02-28', priority:'High',   status:'In Progress', notes:'Rush order' },
+    { jobNumber:'JOB-2024-102', customer:'Customer B', partName:'Base Plate',  totalQty:'30', unitPrice:'28.00', currency:'USD', startDate:'2024-01-15', dueDate:'2024-03-15', priority:'Medium', status:'Open',        notes:'' },
+    { jobNumber:'JOB-2024-103', customer:'Customer A', partName:'Frame Assy',  totalQty:'20', unitPrice:'45.00', currency:'USD', startDate:'2024-02-01', dueDate:'2024-04-01', priority:'Low',    status:'Completed',   notes:'QC passed' },
+    { jobNumber:'JOB-2024-104', customer:'Customer C', partName:'Enclosure',   totalQty:'10', unitPrice:'85.00', currency:'USD', startDate:'2024-02-10', dueDate:'2024-03-30', priority:'High',   status:'On Hold',     notes:'Awaiting material' },
+    { jobNumber:'JOB-2024-105', customer:'Customer D', partName:'Bracket Set', totalQty:'100',unitPrice:'4.50',  currency:'USD', startDate:'2024-03-01', dueDate:'2024-05-01', priority:'Medium', status:'Shipped',     notes:'' },
+  ];
+}
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  setupDateField();
+  startClock();
+  loadMasterData();
+  initThemeBtn();
+  renderJobEntries();  // render initial single job entry block
+});
+
+// ── Clock ───────────────────────────────────
+function startClock() {
+  const tick = () => document.getElementById('live-clock').textContent = new Date().toLocaleTimeString('en-US',{hour12:false});
+  tick(); setInterval(tick, 1000);
+}
+
+// ══════════════════════════════════════════════
+//  DATE FIELD — only today allowed
+// ══════════════════════════════════════════════
+function setupDateField() {
+  const today = getTodayStr();
+  const dateInput = document.getElementById('logDate');
+
+  // Set to today
+  dateInput.value = today;
+  // Lock min and max to today only
+  dateInput.min = today;
+  dateInput.max = today;
+
+  dateInput.addEventListener('change', validateDate);
+  validateDate();
+}
+
+function getTodayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function validateDate() {
+  const dateInput = document.getElementById('logDate');
+  const dateError = document.getElementById('dateError');
+  const today = getTodayStr();
+  const val = dateInput.value;
+
+  if (!val) {
+    showDateError('Date is required.');
+    return false;
+  }
+  if (val > today) {
+    showDateError('❌ Future dates are not allowed. Please select today\'s date.');
+    dateInput.classList.add('invalid');
+    return false;
+  }
+  if (val < today) {
+    showDateError('❌ Backdated entries are not allowed. Only today\'s date is accepted.');
+    dateInput.classList.add('invalid');
+    return false;
+  }
+  dateError.style.display = 'none';
+  dateInput.classList.remove('invalid');
+  dateInput.value = today; // force back to today
+  return true;
+}
+
+function showDateError(msg) {
+  const el = document.getElementById('dateError');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  GAS FETCH — smart loader for Google Apps Script GET endpoints
+//
+//  Strategy:
+//    1. Try normal fetch() — works when Apps Script is deployed correctly
+//       with "Execute as: Me / Anyone" and CORS is auto-added by Google
+//    2. If fetch fails (CORS/network), fall back to JSONP via <script> tag
+//       — works even from file:// origin
+//
+//  Most common reasons this still fails:
+//    A) Script was NOT re-deployed after code changes
+//       → Deploy → New Deployment (not "Manage deployments / Edit")
+//    B) "Who has access" is NOT set to "Anyone"
+//       → Apps Script → Deploy → Who has access: Anyone
+//    C) Script has never been authorized
+//       → Open the Web App URL directly in your browser once and click Allow
+// ══════════════════════════════════════════════════════════════════
+
+async function gasFetch(action, params) {
+  const qs = new URLSearchParams({ action, ...params }).toString();
+  const url = SCRIPT_URL + '?' + qs;
+
+  // ── Strategy 1: normal fetch (works when deployed correctly) ──
+  try {
+    const res = await fetch(url, { redirect: 'follow' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    return data;
+  } catch (fetchErr) {
+    console.log('[gasFetch] fetch failed (' + fetchErr.message + '), trying JSONP...');
+  }
+
+  // ── Strategy 2: JSONP via <script> tag (works from file://) ──
+  return new Promise((resolve, reject) => {
+    const cbName = '_mfgcb_' + action.replace(/\W/g, '') + '_' + Date.now();
+    const script = document.createElement('script');
+    const timer  = setTimeout(() => {
+      cleanup();
+      reject(new Error(
+        'Timeout — check: (1) URL is correct, (2) Script is deployed as Web App, ' +
+        '(3) "Who has access" = Anyone, (4) Open the script URL in your browser once to authorize'
+      ));
+    }, 12000);
+
+    window[cbName] = (data) => { cleanup(); resolve(data); };
+
+    function cleanup() {
+      clearTimeout(timer);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }
+
+    script.onerror = (e) => {
+      cleanup();
+      reject(new Error(
+        'Script load failed — the Apps Script URL returned an error or redirect. ' +
+        'Open this URL in your browser to check: ' + url + '&callback=test'
+      ));
+    };
+
+    const cbUrl = url + '&callback=' + cbName;
+    script.src = cbUrl;
+    document.head.appendChild(script);
+  });
+}
+
+// ══════════════════════════════════════════════
+//  THEME — day / night toggle
+// ══════════════════════════════════════════════
+(function() {
+  // Apply saved theme immediately to prevent flash
+  const t = localStorage.getItem('mfgops_theme') || 'night';
+  document.documentElement.setAttribute('data-theme', t);
+  // Restore session badge from landing page login
+  window.addEventListener('DOMContentLoaded', function() {
+    try {
+      const sess = JSON.parse(localStorage.getItem('mfgops_session') || 'null');
+      if (sess) {
+        const badge = document.getElementById('sessionBadge');
+        if (badge) badge.textContent = sess.user.toUpperCase() + ' · ' + sess.role.toUpperCase();
+      }
+    } catch(e) {}
+  });
+})();
+
+function toggleTheme() {
+  const cur  = document.documentElement.getAttribute('data-theme') || 'night';
+  const next = cur === 'night' ? 'day' : 'night';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('mfgops_theme', next);
+  const btn = document.getElementById('themeToggle');
+  if (btn) {
+    btn.innerHTML = next === 'day'
+      ? '<span class="t-icon">🌙</span> NIGHT'
+      : '<span class="t-icon">☀️</span> DAY';
+  }
+}
+
+function initThemeBtn() {
+  const t   = localStorage.getItem('mfgops_theme') || 'night';
+  const btn = document.getElementById('themeToggle');
+  if (!btn) return;
+  btn.innerHTML = t === 'day'
+    ? '<span class="t-icon">🌙</span> NIGHT'
+    : '<span class="t-icon">☀️</span> DAY';
+}
+
+// ══════════════════════════════════════════════
+//  LOAD MASTER DATA (Workers + Customers)
+// ══════════════════════════════════════════════
+async function loadMasterData() {
+  if (SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+    workers   = DEMO_WORKERS;
+    customers = DEMO_CUSTOMERS;
+    populateWorkerDropdown();
+    populateCustomerDropdown();
+    setBannerSuccess('✓ DEMO MODE — Set SCRIPT_URL at the top of this file to load live data.');
+    return;
+  }
+
+  setBannerLoading('Connecting to Google Sheets...');
+
+  // ── Step 1: ping the script to verify it's alive ──
+  let pingOk = false;
+  try {
+    const test = await gasFetch('test', {});
+    pingOk = !!(test && test.status === 'ok');
+    console.log('[MFG OPS] Ping:', test);
+  } catch (pingErr) {
+    // Ping failed — show diagnostic and bail to demo data
+    const msg = pingErr.message || '';
+    let hint = '';
+    if (msg.includes('Timeout'))       hint = 'Script URL may be wrong, or script was never authorized.';
+    else if (msg.includes('load failed')) hint = 'Script returned an error/redirect — not deployed correctly.';
+    else                               hint = msg;
+    workers   = DEMO_WORKERS;
+    customers = DEMO_CUSTOMERS;
+    populateWorkerDropdown();
+    populateCustomerDropdown();
+    setBannerError(
+      '⚠ Cannot reach Apps Script. ' + hint + ' ' +
+      'Fix: (1) Open your script URL in a browser tab and click Authorize, ' +
+      '(2) Deploy → NEW deployment (not edit), ' +
+      '(3) Who has access = Anyone. Using demo data.'
+    );
+    return;
+  }
+
+  let loadedWorkers = 0, loadedCustomers = 0;
+
+  // ── Step 2: load workers ──
+  try {
+    const wData = await gasFetch('getWorkers', {});
+    console.log('[MFG OPS] getWorkers raw:', wData);
+
+    if (wData && Array.isArray(wData.workers) && wData.workers.length > 0) {
+      // Normalise — GS returns objects with consistent keys after our fix
+      // but handle any variant spelling defensively
+      workers = wData.workers
+        .filter(w => (w.status || 'Active') !== 'Inactive')
+        .map(w => ({
+          workerId:   w.workerId   || w.workerID   || w['worker Id'] || '',
+          workerName: w.workerName || w['worker Name'] || '',
+          team:       w.team       || '',
+          shift:      w.shift      || 'Morning',
+          supervisor: w.supervisor || '',
+          primaryOp:  w.primaryOp  || w.primaryOperation || '',
+          status:     w.status     || 'Active',
+          customers:  w.customers  || w.assignedCustomers || '',
+          notes:      w.notes      || w.notesSkills || ''
+        }))
+        .filter(w => w.workerId && w.workerName);
+      loadedWorkers = workers.length;
+      console.log('[MFG OPS] Workers mapped:', loadedWorkers);
+    } else {
+      console.warn('[MFG OPS] getWorkers returned empty — source:', wData && wData.source);
+      workers = DEMO_WORKERS;
+    }
+  } catch (err) {
+    console.error('[MFG OPS] getWorkers error:', err.message);
+    workers = DEMO_WORKERS;
+  }
+
+  // ── Step 3: load customers ──
+  try {
+    const cData = await gasFetch('getCustomers', {});
+    console.log('[MFG OPS] getCustomers raw:', cData);
+
+    if (cData && Array.isArray(cData.customers) && cData.customers.length > 0) {
+      customers = cData.customers
+        .map(c => (typeof c === 'string' ? c : (c.customerName || '')))
+        .filter(Boolean);
+      loadedCustomers = customers.length;
+    } else {
+      customers = DEMO_CUSTOMERS;
+    }
+  } catch (err) {
+    console.error('[MFG OPS] getCustomers error:', err.message);
+    customers = DEMO_CUSTOMERS;
+  }
+
+  populateWorkerDropdown();
+  populateCustomerDropdown();
+  renderJobEntries(); // rebuild entries so customer dropdowns reflect live data
+
+  if (loadedWorkers > 0 && loadedCustomers > 0) {
+    setBannerSuccess(`✓ Live data — ${loadedWorkers} workers · ${loadedCustomers} customers loaded from Google Sheets`);
+  } else if (loadedWorkers > 0) {
+    setBannerSuccess(`✓ ${loadedWorkers} workers loaded · customers using demo data`);
+  } else {
+    setBannerError(
+      `⚠ Workers sheet returned 0 rows. ` +
+      `Make sure the Workers sheet exists in your Google Sheet with data rows. ` +
+      `Source: ${pingOk ? 'script OK but sheet empty/missing' : 'script error'}. Using demo data.`
+    );
+  }
+}
+
+function setBannerLoading(msg) {
+  const banner = document.getElementById('loadingBanner');
+  const dot = banner.querySelector('.dot');
+  banner.style.background    = 'rgba(240,192,64,0.08)';
+  banner.style.borderColor   = 'rgba(240,192,64,0.25)';
+  dot.style.background       = 'var(--accent)';
+  dot.style.animation        = 'pulse 1.2s ease-in-out infinite';
+  document.getElementById('loadingText').textContent = msg;
+}
+
+function setBannerSuccess(msg) {
+  const banner = document.getElementById('loadingBanner');
+  const dot = banner.querySelector('.dot');
+  banner.style.background  = 'rgba(34,197,94,0.07)';
+  banner.style.borderColor = 'rgba(34,197,94,0.25)';
+  dot.style.background     = 'var(--success)';
+  dot.style.animation      = 'none';
+  document.getElementById('loadingText').textContent = msg;
+}
+
+function setBannerWarning(msg) {
+  const banner = document.getElementById('loadingBanner');
+  const dot = banner.querySelector('.dot');
+  banner.style.background  = 'rgba(249,115,22,0.07)';
+  banner.style.borderColor = 'rgba(249,115,22,0.3)';
+  dot.style.background     = 'var(--warning)';
+  dot.style.animation      = 'none';
+  document.getElementById('loadingText').textContent = msg;
+}
+
+function setBannerError(msg) {
+  const banner = document.getElementById('loadingBanner');
+  const dot = banner.querySelector('.dot');
+  banner.style.background  = 'rgba(239,68,68,0.07)';
+  banner.style.borderColor = 'rgba(239,68,68,0.3)';
+  dot.style.background     = 'var(--danger)';
+  dot.style.animation      = 'none';
+  document.getElementById('loadingText').textContent = msg;
+}
+
+// ══════════════════════════════════════════════
+//  POPULATE DROPDOWNS
+// ══════════════════════════════════════════════
+function populateWorkerDropdown() {
+  const sel = document.getElementById('workerSelect');
+  sel.innerHTML = '<option value="">— Select Your Name —</option>';
+
+  // Group by team
+  const india = workers.filter(w => w.team === 'India');
+  const usa = workers.filter(w => w.team === 'USA');
+  const other = workers.filter(w => w.team !== 'India' && w.team !== 'USA');
+
+  if (india.length) {
+    const grp = document.createElement('optgroup');
+    grp.label = '🇮🇳 India Team';
+    india.forEach(w => {
+      const o = document.createElement('option');
+      o.value = w.workerId;
+      o.textContent = w.workerName + ' (' + w.workerId + ')';
+      if (w.status === 'On Leave') o.textContent += ' — On Leave';
+      o.disabled = w.status === 'Inactive';
+      grp.appendChild(o);
+    });
+    sel.appendChild(grp);
+  }
+  if (usa.length) {
+    const grp = document.createElement('optgroup');
+    grp.label = '🇺🇸 USA Team';
+    usa.forEach(w => {
+      const o = document.createElement('option');
+      o.value = w.workerId;
+      o.textContent = w.workerName + ' (' + w.workerId + ')';
+      if (w.status === 'On Leave') o.textContent += ' — On Leave';
+      o.disabled = w.status === 'Inactive';
+      grp.appendChild(o);
+    });
+    sel.appendChild(grp);
+  }
+  if (other.length) {
+    other.forEach(w => {
+      const o = document.createElement('option');
+      o.value = w.workerId;
+      o.textContent = w.workerName + ' (' + w.workerId + ')';
+      sel.appendChild(o);
+    });
+  }
+}
+
+function populateCustomerDropdown() {
+  const sel = document.getElementById('customer');
+  sel.innerHTML = '<option value="">— Select Customer —</option>';
+  customers.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c; o.textContent = c;
+    sel.appendChild(o);
+  });
+  // Add new/other at end
+  const o = document.createElement('option');
+  o.value = 'New/Other'; o.textContent = '➕ New / Other';
+  sel.appendChild(o);
+}
+
+// ══════════════════════════════════════════════
+//  WORKER SELECT — auto-fill info
+// ══════════════════════════════════════════════
+function onWorkerSelect() {
+  const sel = document.getElementById('workerSelect');
+  const id = sel.value;
+  const panel = document.getElementById('workerInfoPanel');
+
+  if (!id) {
+    selectedWorker = null;
+    panel.classList.remove('visible');
+    ['workerName','workerId','team','supervisor'].forEach(f => document.getElementById(f).value = '');
+    return;
+  }
+
+  selectedWorker = workers.find(w => w.workerId === id);
+  if (!selectedWorker) return;
+
+  // Populate hidden fields
+  document.getElementById('workerName').value = selectedWorker.workerName;
+  document.getElementById('workerId').value = selectedWorker.workerId;
+  document.getElementById('team').value = selectedWorker.team || '';
+  document.getElementById('supervisor').value = selectedWorker.supervisor || '';
+
+  // Auto-set shift from worker default
+  if (selectedWorker.shift) {
+    document.getElementById('shift').value = selectedWorker.shift;
+  }
+
+  // Show info panel
+  document.getElementById('wi-id').textContent = selectedWorker.workerId;
+  document.getElementById('wi-team').textContent = (selectedWorker.team === 'India' ? '🇮🇳 ' : '🇺🇸 ') + (selectedWorker.team || '—');
+  document.getElementById('wi-supervisor').textContent = selectedWorker.supervisor || '—';
+  document.getElementById('wi-op').textContent = selectedWorker.primaryOp || '—';
+  document.getElementById('wi-shift').textContent = selectedWorker.shift || '—';
+  const statusEl = document.getElementById('wi-status');
+  statusEl.textContent = selectedWorker.status || 'Active';
+  statusEl.style.color = selectedWorker.status === 'Active' ? 'var(--success)' :
+                         selectedWorker.status === 'On Leave' ? 'var(--warning)' : 'var(--muted)';
+
+  panel.classList.add('visible');
+
+  // Warn if on leave
+  if (selectedWorker.status === 'On Leave') {
+    showToast('⚠ ' + selectedWorker.workerName + ' is marked ON LEAVE', 'warning');
+  }
+}
+
+// ══════════════════════════════════════════════
+//  CUSTOMER CHANGE
+// ══════════════════════════════════════════════
+function onCustomerChange() {
+  const val = document.getElementById('customer').value;
+  const cf = document.getElementById('customCustomerField');
+  cf.style.display = val === 'New/Other' ? 'flex' : 'none';
+  if (val !== 'New/Other') document.getElementById('customCustomer').value = '';
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  MULTI-JOB ENGINE
+//  Each job entry is a self-contained object in the jobEntries array.
+//  The DOM is rendered from this array every time addJobEntry / removeJobEntry
+//  is called — keeping data and UI in sync.
+// ══════════════════════════════════════════════════════════════════════
+
+const OPS_LIST = [
+  {val:'RFQ Handling',  icon:'📋'}, {val:'Cutting',       icon:'✂️'},
+  {val:'Bending',       icon:'🔧'}, {val:'Welding',       icon:'⚡'},
+  {val:'Punching',      icon:'🔩'}, {val:'Forming',       icon:'🏗️'},
+  {val:'Quality Check', icon:'🔍'}, {val:'Assembly',      icon:'🔨'},
+  {val:'Finishing',     icon:'🎨'}, {val:'Shipping Prep', icon:'📦'},
+  {val:'Shipping',      icon:'🚚'}, {val:'Shipping Monitor',icon:'📡'},
+  {val:'NCM Handling',  icon:'⚠️', ncm:true}
+];
+
+// Each entry mirrors the form fields for one job
+function blankEntry() {
+  return {
+    customer:'', customCustomer:'', orderNo:'', rfqRef:'', partName:'',
+    qtyAssigned:'', qtyCompleted:'',
+    ops:[],        // array of selected operation strings
+    timeIn:'', timeOut:'', breakMins:'', hoursWorked:'', overtimeHrs:'',
+    jobStatus:'',
+    defectCount:'', rework:'No', qualityNotes:'',
+    ncmRef:'', ncmType:'', ncmQty:'', ncmDisposition:'', ncmDescription:''
+  };
+}
+
+let jobEntries = [blankEntry()]; // start with 1 entry
+
+function addJobEntry() {
+  jobEntries.push(blankEntry());
+  renderJobEntries();
+  // Scroll new entry into view
+  const entries = document.querySelectorAll('.job-entry');
+  if (entries.length) entries[entries.length-1].scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function removeJobEntry(idx) {
+  if (jobEntries.length === 1) {
+    showToast('At least one job entry is required', 'warning');
+    return;
+  }
+  jobEntries.splice(idx, 1);
+  renderJobEntries();
+  updateJobSummary();
+}
+
+// ── Render all job entries from state ──────────────────────────────────
+function renderJobEntries() {
+  const container = document.getElementById('jobEntriesContainer');
+  container.innerHTML = jobEntries.map((e, i) => buildEntryHTML(e, i)).join('');
+  // Restore select values (innerHTML resets them)
+  jobEntries.forEach((e, i) => {
+    const prefix = 'job_' + i + '_';
+    setVal(prefix+'customer', e.customer);
+    setVal(prefix+'rework',   e.rework || 'No');
+    setVal(prefix+'ncmType',  e.ncmType);
+    setVal(prefix+'ncmDisposition', e.ncmDisposition);
+    // Restore ops checkboxes
+    e.ops.forEach(op => {
+      const cb = document.querySelector(`#jobEntriesContainer .job-entry:nth-child(${i+1}) input[value="${CSS.escape(op)}"]`);
+      if (cb) { cb.checked = true; cb.closest('.op-item') && cb.closest('.op-item').classList.add('selected'); }
+    });
+    // Restore status button
+    if (e.jobStatus) {
+      const statusMap = {
+        'In Progress':'active-yellow','Completed':'active-green','On Hold':'active-red',
+        'Awaiting Material':'active-blue','QC Failed':'active-red',
+        'NCM Raised':'active-orange','Shipped':'active-green'
+      };
+      const btns = document.querySelectorAll(`[data-entry="${i}"].status-btn`);
+      btns.forEach(b => { if (b.dataset.val === e.jobStatus) b.classList.add(statusMap[e.jobStatus]||'active-yellow'); });
+    }
+    // Show/hide NCM fields
+    const ncmWrap = document.getElementById('ncmFields_'+i);
+    if (ncmWrap) ncmWrap.style.display = e.ops.includes('NCM Handling') ? 'block' : 'none';
+    // Show/hide custom customer
+    const ccField = document.getElementById('customCustomerWrap_'+i);
+    if (ccField) ccField.style.display = e.customer === 'New/Other' ? 'flex' : 'none';
+    // Recalc hours display
+    calcHoursEntry(i);
+  });
+}
+
+function setVal(id, val) {
+  const el = document.getElementById(id);
+  if (el && val !== undefined && val !== null) el.value = val;
+}
+
+function buildEntryHTML(e, i) {
+  const p = 'job_' + i + '_';
+  const cusOpts = customers.map(c => `<option value="${c}">${c}</option>`).join('');
+  const opsHTML = OPS_LIST.map(op => `
+    <label class="op-item${op.ncm?' ncm':''}" onclick="toggleOpEntry(this,${i})">
+      <input type="checkbox" value="${op.val}"> <span class="op-icon">${op.icon}</span><span class="op-label">${op.val}</span>
+    </label>`).join('');
+  const num = jobEntries.length > 1 ? ` — JOB ${i+1} OF ${jobEntries.length}` : '';
+  return `
+  <div class="job-entry card" id="entry_${i}">
+    <div class="job-entry-header">
+      <div class="job-entry-number">// JOB ENTRY${num}</div>
+      ${jobEntries.length > 1 ? `<button type="button" class="job-entry-remove" onclick="removeJobEntry(${i})">✕ REMOVE JOB ${i+1}</button>` : ''}
+    </div>
+    <div class="job-entry-body">
+
+      <div class="card-title" style="margin-bottom:14px;padding-left:0">02 — Customer & Order Info</div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Customer Name <span class="req">*</span></label>
+          <select id="${p}customer" required onchange="onCustomerChangeEntry(${i}); clearEntryErr(${i},'customer')">
+            <option value="">— Select Customer —</option>
+            ${cusOpts}
+            <option value="New/Other">➕ New / Other</option>
+          </select>
+          <div class="field-error" id="err_${i}_customer">Please select a customer</div>
+        </div>
+        <div class="field" id="customCustomerWrap_${i}" style="display:none">
+          <label>New Customer Name <span class="req">*</span></label>
+          <input type="text" id="${p}customCustomer" placeholder="Enter customer name"
+            oninput="sanitiseText(this,'name'); clearEntryErr(${i},'customCustomer')">
+          <div class="field-error" id="err_${i}_customCustomer">Please enter customer name</div>
+        </div>
+        <div class="field">
+          <label>Order / Job Number <span class="req">*</span></label>
+          <input type="text" id="${p}orderNo" placeholder="e.g. JOB-2024-1123" value="${e.orderNo}"
+            oninput="sanitiseText(this,'jobref'); updateEntry(${i},'orderNo',this.value); clearEntryErr(${i},'orderNo')">
+          <div class="field-error" id="err_${i}_orderNo">Order / Job number is required</div>
+        </div>
+        <div class="field">
+          <label>RFQ / Quote Reference</label>
+          <input type="text" id="${p}rfqRef" placeholder="e.g. RFQ-567" value="${e.rfqRef}"
+            oninput="sanitiseText(this,'jobref'); updateEntry(${i},'rfqRef',this.value)">
+        </div>
+        <div class="field">
+          <label>Part / Product Name</label>
+          <input type="text" id="${p}partName" placeholder="Part description" value="${e.partName}"
+            oninput="sanitiseText(this,'name'); updateEntry(${i},'partName',this.value)">
+        </div>
+        <div class="field">
+          <label>Qty Assigned</label>
+          <input type="number" id="${p}qtyAssigned" placeholder="0" min="0" value="${e.qtyAssigned}"
+            oninput="updateEntry(${i},'qtyAssigned',this.value)">
+        </div>
+        <div class="field">
+          <label>Qty Completed</label>
+          <input type="number" id="${p}qtyCompleted" placeholder="0" min="0" value="${e.qtyCompleted}"
+            oninput="updateEntry(${i},'qtyCompleted',this.value)">
+        </div>
+      </div>
+
+      <hr class="divider">
+      <div class="card-title" style="margin-bottom:12px;padding-left:0">03 — Operations</div>
+      <div class="ops-grid">${opsHTML}</div>
+      <div class="field-error" id="err_${i}_ops" style="margin:8px 0 0">Select at least one operation</div>
+      <div id="ncmFields_${i}" style="display:none;margin-top:12px">
+        <div class="ncm-card">
+          <div class="ncm-title">⚠ Non-Conformance (NCM) Details</div>
+          <div class="grid-2">
+            <div class="field"><label>NCM Reference #</label>
+              <input type="text" id="${p}ncmRef" placeholder="e.g. NCM-2024-005"
+                oninput="sanitiseText(this,'jobref'); updateEntry(${i},'ncmRef',this.value)"></div>
+            <div class="field"><label>NCM Type</label>
+              <select id="${p}ncmType" onchange="updateEntry(${i},'ncmType',this.value)">
+                <option value="">— Select —</option>
+                <option>Dimensional Deviation</option><option>Surface Defect</option>
+                <option>Wrong Material</option><option>Incorrect Assembly</option>
+                <option>Weld Defect</option><option>Customer Return</option>
+                <option>Process Error</option><option>Other</option>
+              </select></div>
+            <div class="field"><label>NCM Qty Affected</label>
+              <input type="number" id="${p}ncmQty" placeholder="0" min="0"
+                oninput="updateEntry(${i},'ncmQty',this.value)"></div>
+            <div class="field"><label>NCM Disposition</label>
+              <select id="${p}ncmDisposition" onchange="updateEntry(${i},'ncmDisposition',this.value)">
+                <option value="">— Select —</option>
+                <option>Rework</option><option>Scrap</option>
+                <option>Use As-Is (Concession)</option><option>Return to Supplier</option><option>Under Review</option>
+              </select></div>
+            <div class="field span-2"><label>NCM Description / Root Cause</label>
+              <textarea id="${p}ncmDescription" rows="2" placeholder="Describe root cause..."
+                oninput="sanitiseText(this,'notes'); updateEntry(${i},'ncmDescription',this.value)"></textarea></div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="divider">
+      <div class="card-title" style="margin-bottom:12px;padding-left:0">04 — Time Tracking</div>
+      <div class="grid-3">
+        <div class="field"><label>Time In</label>
+          <input type="time" id="${p}timeIn" value="${e.timeIn}"
+            oninput="updateEntry(${i},'timeIn',this.value); calcHoursEntry(${i})"></div>
+        <div class="field"><label>Time Out</label>
+          <input type="time" id="${p}timeOut" value="${e.timeOut}"
+            oninput="updateEntry(${i},'timeOut',this.value); calcHoursEntry(${i})"></div>
+        <div class="field"><label>Hours Worked</label>
+          <div class="hours-display" id="hoursCalc_${i}">— hrs</div></div>
+        <div class="field"><label>Break (mins)</label>
+          <input type="number" id="${p}breakMins" placeholder="30" min="0" max="480" value="${e.breakMins}"
+            oninput="updateEntry(${i},'breakMins',this.value); calcHoursEntry(${i})"></div>
+        <div class="field"><label>Overtime Hours</label>
+          <input type="number" id="${p}overtimeHrs" placeholder="0.0" step="0.5" min="0" value="${e.overtimeHrs}"
+            oninput="updateEntry(${i},'overtimeHrs',this.value)"></div>
+      </div>
+
+      <hr class="divider">
+      <div class="card-title" style="margin-bottom:12px;padding-left:0">05 — Quality & Job Status</div>
+      <div style="margin-bottom:12px">
+        <label style="display:block;margin-bottom:8px;font-size:10px;font-family:'IBM Plex Mono';letter-spacing:1.5px;color:var(--label);text-transform:uppercase">Job Status <span class="req">*</span></label>
+        <div class="status-row">
+          <button type="button" class="status-btn" data-val="In Progress" data-entry="${i}" onclick="setStatusEntry(this,${i},'active-yellow')">⏳ In Progress</button>
+          <button type="button" class="status-btn" data-val="Completed"   data-entry="${i}" onclick="setStatusEntry(this,${i},'active-green')">✅ Completed</button>
+          <button type="button" class="status-btn" data-val="On Hold"     data-entry="${i}" onclick="setStatusEntry(this,${i},'active-red')">🚫 On Hold</button>
+          <button type="button" class="status-btn" data-val="Awaiting Material" data-entry="${i}" onclick="setStatusEntry(this,${i},'active-blue')">📦 Awaiting</button>
+          <button type="button" class="status-btn" data-val="QC Failed"   data-entry="${i}" onclick="setStatusEntry(this,${i},'active-red')">❌ QC Failed</button>
+          <button type="button" class="status-btn" data-val="NCM Raised"  data-entry="${i}" onclick="setStatusEntry(this,${i},'active-orange')">⚠️ NCM Raised</button>
+          <button type="button" class="status-btn" data-val="Shipped"     data-entry="${i}" onclick="setStatusEntry(this,${i},'active-green')">🚢 Shipped</button>
+        </div>
+        <div class="field-error" id="err_${i}_status" style="margin-top:6px">Please select a job status</div>
+      </div>
+      <div class="grid-2">
+        <div class="field"><label>Defects Count</label>
+          <input type="number" id="${p}defectCount" placeholder="0" min="0" value="${e.defectCount}"
+            oninput="updateEntry(${i},'defectCount',this.value)"></div>
+        <div class="field"><label>Rework Required?</label>
+          <select id="${p}rework" onchange="updateEntry(${i},'rework',this.value)">
+            <option value="No">No</option><option value="Yes">Yes</option>
+          </select></div>
+        <div class="field span-2"><label>Quality Notes</label>
+          <textarea id="${p}qualityNotes" placeholder="Quality issues, observations..."
+            oninput="sanitiseText(this,'notes'); updateEntry(${i},'qualityNotes',this.value)">${e.qualityNotes||''}</textarea></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── Entry state updaters ────────────────────────────────────────────────
+function updateEntry(idx, field, val) {
+  if (jobEntries[idx]) jobEntries[idx][field] = val;
+  updateJobSummary();
+}
+
+function onCustomerChangeEntry(idx) {
+  const val = document.getElementById('job_'+idx+'_customer').value;
+  jobEntries[idx].customer = val;
+  const wrap = document.getElementById('customCustomerWrap_'+idx);
+  if (wrap) wrap.style.display = val === 'New/Other' ? 'flex' : 'none';
+  if (val !== 'New/Other') jobEntries[idx].customCustomer = '';
+  updateJobSummary();
+}
+
+function toggleOpEntry(el, idx) {
+  el.classList.toggle('selected');
+  const cb  = el.querySelector('input[type="checkbox"]');
+  const val = cb.value;
+  const ops = jobEntries[idx].ops;
+  const has = ops.includes(val);
+  if (!has) { ops.push(val); cb.checked = true; }
+  else       { ops.splice(ops.indexOf(val),1); cb.checked = false; }
+  // Toggle NCM fields
+  if (val === 'NCM Handling') {
+    const ncmWrap = document.getElementById('ncmFields_'+idx);
+    if (ncmWrap) ncmWrap.style.display = ops.includes('NCM Handling') ? 'block' : 'none';
+  }
+  // Clear ops error
+  const errEl = document.getElementById('err_'+idx+'_ops');
+  if (errEl && ops.length > 0) errEl.classList.remove('visible');
+  updateJobSummary();
+}
+
+function setStatusEntry(btn, idx, cls) {
+  // Clear all status buttons for this entry
+  const btns = btn.closest('.status-row').querySelectorAll('.status-btn');
+  btns.forEach(b => b.classList.remove('active-green','active-yellow','active-red','active-blue','active-orange'));
+  btn.classList.add(cls);
+  jobEntries[idx].jobStatus = btn.dataset.val;
+  const errEl = document.getElementById('err_'+idx+'_status');
+  if (errEl) errEl.classList.remove('visible');
+  updateJobSummary();
+}
+
+function calcHoursEntry(idx) {
+  const p    = 'job_'+idx+'_';
+  const tin  = (document.getElementById(p+'timeIn')  ||{}).value || '';
+  const tout = (document.getElementById(p+'timeOut') ||{}).value || '';
+  const brk  = parseInt((document.getElementById(p+'breakMins')||{}).value || 0);
+  const disp = document.getElementById('hoursCalc_'+idx);
+  if (tin && tout) {
+    const [h1,m1] = tin.split(':').map(Number);
+    const [h2,m2] = tout.split(':').map(Number);
+    let mins = (h2*60+m2)-(h1*60+m1);
+    if (mins < 0) mins += 24*60;
+    mins -= brk;
+    const hrs = Math.max(0, mins/60).toFixed(2);
+    if (disp) disp.textContent = hrs + ' hrs';
+    jobEntries[idx].hoursWorked = hrs;
+    return hrs;
+  }
+  if (disp) disp.textContent = '— hrs';
+  jobEntries[idx].hoursWorked = '';
+  return '';
+}
+
+function updateJobSummary() {
+  const el = document.getElementById('jobsSummary');
+  if (!el) return;
+  if (jobEntries.length <= 1) { el.classList.remove('visible'); return; }
+  el.classList.add('visible');
+  const header = '<div style="font-family:' + "'IBM Plex Mono'" + ';font-size:9px;letter-spacing:2px;color:var(--accent);margin-bottom:8px">// SUBMISSION SUMMARY — ' + jobEntries.length + ' JOBS</div>';
+  const rows = jobEntries.map((e,i) => {
+    const order  = e.orderNo    || '—';
+    const status = e.jobStatus  || 'No status';
+    const qty    = e.qtyCompleted ? e.qtyCompleted + ' units' : '';
+    return '<div class="summary-row"><span>Job ' + (i+1) + ': <strong>' + order + '</strong> · ' + (e.customer||'No customer') + '</span><span>' + qty + ' ' + status + '</span></div>';
+  }).join('');
+  el.innerHTML = header + rows;
+}
+
+// ── Legacy stubs (keep so old IDs in notes/escalation section still work) ──
+function toggleOp(el) { el.classList.toggle('selected'); }
+function setStatus()  { /* handled by setStatusEntry */ }
+
+// ══════════════════════════════════════════════════════════════════
+//  SANITISE — strip disallowed characters in real time
+//
+//  Modes:
+//    'jobref'    – job/order/ref numbers: A-Z 0-9 - / . _ space
+//    'name'      – names / descriptions:  A-Z 0-9 letters - , . & ( ) space
+//    'equipment' – machine names:         A-Z 0-9 - , . # / space
+//    'material'  – material codes:        A-Z 0-9 - , . / space
+//    'notes'     – free text textarea:    block only < > { } \ ` | ^ ~ ;
+// ══════════════════════════════════════════════════════════════════
+const SANITISE_RULES = {
+  jobref:    { pattern: /[^A-Za-z0-9\-/._\s]/g,     label: 'Letters, numbers, - / . _' },
+  name:      { pattern: /[^A-Za-z0-9\s\-,.&()'\']/g, label: 'Letters, numbers, - , . & ( )' },
+  equipment: { pattern: /[^A-Za-z0-9\s\-,.#/]/g,    label: 'Letters, numbers, - , . # /' },
+  material:  { pattern: /[^A-Za-z0-9\s\-,./]/g,     label: 'Letters, numbers, - , . /' },
+  notes:     { pattern: /[<>{}\\`|^~;]/g,            label: 'No < > { } \\ ` | ^ ~ ;' },
+};
+
+function sanitiseText(el, mode) {
+  const rule = SANITISE_RULES[mode];
+  if (!rule) return;
+  const orig = el.value;
+  const cleaned = orig.replace(rule.pattern, '');
+  if (cleaned !== orig) {
+    el.value = cleaned;
+    flashStrip(el.id);
+  }
+}
+
+function flashStrip(id) {
+  const el = document.getElementById('strip-' + id);
+  if (!el) return;
+  el.classList.remove('show');
+  // Force reflow so animation restarts
+  void el.offsetWidth;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ── Clear inline error when field is corrected ──
+function clearErr(id) {
+  const el = document.getElementById(id);
+  const errEl = document.getElementById('err-' + id);
+  if (el)    el.classList.remove('invalid');
+  if (errEl) errEl.classList.remove('visible');
+}
+
+// ── Show inline error ──
+function showErr(id, msg) {
+  const el    = document.getElementById(id);
+  const errEl = document.getElementById('err-' + id);
+  if (el)    el.classList.add('invalid');
+  if (errEl) {
+    if (msg) errEl.textContent = msg;
+    errEl.classList.add('visible');
+    // Scroll first error into view
+    if (!window._firstErrScrolled) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      window._firstErrScrolled = true;
+    }
+  }
+}
+
+// ══════════════════════════════════════════════
+//  FORM VALIDATION — validates all job entries
+// ══════════════════════════════════════════════
+function showEntryErr(idx, field, msg) {
+  const el = document.getElementById('err_'+idx+'_'+field);
+  if (!el) return;
+  if (msg) el.textContent = msg;
+  el.classList.add('visible');
+  if (!window._firstErrScrolled) {
+    el.scrollIntoView({ behavior:'smooth', block:'center' });
+    window._firstErrScrolled = true;
+  }
+}
+function clearEntryErr(idx, field) {
+  const el = document.getElementById('err_'+idx+'_'+field);
+  if (el) el.classList.remove('visible');
+}
+
+function validateForm() {
+  let valid = true;
+  window._firstErrScrolled = false;
+
+  // ── Worker ──
+  if (!document.getElementById('workerSelect').value) {
+    showErr('workerSelect', 'Please select your name from the list');
+    valid = false;
+  } else {
+    clearErr('workerSelect');
+  }
+
+  // ── Date ──
+  if (!validateDate()) valid = false;
+
+  // ── Validate each job entry ──
+  jobEntries.forEach((e, i) => {
+    // Customer
+    if (!e.customer) {
+      showEntryErr(i, 'customer', 'Please select a customer');
+      valid = false;
+    } else {
+      clearEntryErr(i, 'customer');
+      if (e.customer === 'New/Other') {
+        const cc = (document.getElementById('job_'+i+'_customCustomer')||{}).value||'';
+        if (!cc.trim()) { showEntryErr(i, 'customCustomer', 'Enter customer name'); valid = false; }
+        else             { clearEntryErr(i, 'customCustomer'); e.customCustomer = cc; }
+      }
+    }
+    // Order number
+    if (!e.orderNo.trim()) {
+      showEntryErr(i, 'orderNo', 'Order / Job number is required');
+      valid = false;
+    } else {
+      clearEntryErr(i, 'orderNo');
+    }
+    // Operations
+    if (!e.ops || e.ops.length === 0) {
+      showEntryErr(i, 'ops', 'Select at least one operation');
+      valid = false;
+    } else {
+      clearEntryErr(i, 'ops');
+    }
+    // Job status
+    if (!e.jobStatus) {
+      showEntryErr(i, 'status', 'Please select a job status');
+      valid = false;
+    } else {
+      clearEntryErr(i, 'status');
+    }
+  });
+
+  return valid;
+}
+
+// ══════════════════════════════════════════════
+//  FORM SUBMIT
+// ══════════════════════════════════════════════
+document.getElementById('workForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+
+  if (!validateForm()) {
+    showToast('✗ Fix the highlighted errors before submitting', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'SUBMITTING...';
+
+  // Build a log row for every job entry — each becomes a separate sheet row
+  const sharedFields = {
+    timestamp:   new Date().toISOString(),
+    date:        document.getElementById('logDate').value,
+    workerName:  document.getElementById('workerName').value,
+    workerId:    document.getElementById('workerId').value,
+    team:        document.getElementById('team').value,
+    shift:       document.getElementById('shift').value,
+    supervisor:  document.getElementById('supervisor').value,
+    workNotes:   document.getElementById('workNotes').value,
+    escalation:  document.getElementById('escalation').value,
+    machine:     document.getElementById('machine').value,
+    material:    document.getElementById('material').value,
+  };
+
+  const logs = jobEntries.map(e => {
+    const customer = e.customer === 'New/Other' ? (e.customCustomer||'') : e.customer;
+    const isNcm    = e.ops.includes('NCM Handling');
+    return Object.assign({}, sharedFields, {
+      customer,
+      orderNo:       e.orderNo,
+      rfqRef:        e.rfqRef        || '',
+      partName:      e.partName      || '',
+      qtyAssigned:   e.qtyAssigned   || 0,
+      qtyCompleted:  e.qtyCompleted  || 0,
+      operations:    e.ops.join(', '),
+      timeIn:        e.timeIn        || '',
+      timeOut:       e.timeOut       || '',
+      breakMins:     e.breakMins     || 0,
+      hoursWorked:   e.hoursWorked   || 0,
+      overtimeHrs:   e.overtimeHrs   || 0,
+      jobStatus:     e.jobStatus,
+      defectCount:   e.defectCount   || 0,
+      rework:        e.rework        || 'No',
+      qualityNotes:  e.qualityNotes  || '',
+      ncmRef:        isNcm ? e.ncmRef         : '',
+      ncmType:       isNcm ? e.ncmType        : '',
+      ncmQty:        isNcm ? (e.ncmQty||0)    : '',
+      ncmDisposition:isNcm ? e.ncmDisposition : '',
+      ncmDescription:isNcm ? e.ncmDescription : '',
+    });
+  });
+
+  // Demo mode
+  if (SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+    console.log('[DEMO] Submitting', logs.length, 'job(s):');
+    logs.forEach((l,i) => { console.log('  Job '+(i+1)+':', l.orderNo, l.customer, l.operations); });
+    showToast('✓ DEMO — ' + logs.length + ' job(s) logged to console', 'success');
+    resetForm();
+    btn.disabled = false;
+    btn.textContent = '▶ SUBMIT DAILY LOG';
+    return;
+  }
+
+  try {
+    // Use addLogs (batch) when multiple entries, addLog for single
+    const action = logs.length === 1 ? 'addLog' : 'addLogs';
+    const payload = logs.length === 1 ? logs[0] : { action: 'addLogs', logs };
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ action }, payload))
+    });
+    showToast('✓ ' + logs.length + ' JOB' + (logs.length>1?'S':'')+' SUBMITTED', 'success');
+    resetForm();
+  } catch(err) {
+    showToast('✗ SUBMISSION FAILED — CHECK CONNECTION', 'error');
+  }
+
+  btn.disabled = false;
+  btn.textContent = '▶ SUBMIT DAILY LOG';
+});
+
+// ══════════════════════════════════════════════
+//  RESET FORM
+// ══════════════════════════════════════════════
+function resetForm() {
+  document.getElementById('workForm').reset();
+  document.getElementById('workerInfoPanel').classList.remove('visible');
+  selectedWorker = null;
+  // Reset job entries back to a single blank entry
+  jobEntries = [blankEntry()];
+  renderJobEntries();
+  updateJobSummary();
+  // Reset notes/escalation/machine fields in section 6
+  ['workNotes','escalation','machine','material'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  setupDateField(); // re-lock date to today
+}
+
+// ══════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = type === 'error' ? 'error show' : type === 'warning' ? 'warning show' : 'show';
+  setTimeout(() => { t.className = ''; }, 3800);
+}
+</script>
+</body>
+</html>
